@@ -25,15 +25,15 @@ using namespace ctre::phoenix::motorcontrol::can;
 // ═══════════════════════════════════════════════════════════════════════════
 // CONFIGURACIÓN — cambia esto según lo que quieras probar
 // ═══════════════════════════════════════════════════════════════════════════
-constexpr int    CAN_ID        = 14;     // ID del Talon a probar
+constexpr int    CAN_ID        = 7;     // ID del Talon a probar
 constexpr double PULSE_SEC     = 0.6;    // duración de cada pulso (segundos)
 constexpr int    PAUSE_MS      = 600;    // pausa entre pulsos (ms)
 // Alterna direcciones para no derivar lejos del centro
 const std::vector<double> TEST_PCT = {
-    +0.10, -0.10,
-    +0.15, -0.15,
-    +0.20, -0.20,
-    +0.25, -0.25,
+    +0.30, -0.30,
+    +0.35, -0.35,
+    +0.40, -0.40,
+    +0.45, -0.45,
 };
 // ═══════════════════════════════════════════════════════════════════════════
 

@@ -125,49 +125,6 @@ target_link_libraries(drive_only_can_tank Threads::Threads)
 
 ament_target_dependencies(drive_only_can_tank rclcpp geometry_msgs std_msgs)
 
-add_executable(joint1_current_node ${PROJECT_SOURCE_DIR}/src/joint1_current_node.cpp)
-if (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "aarch64-linux-gnu")
-    target_link_libraries(joint1_current_node ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_Phoenix.a)
-    target_link_libraries(joint1_current_node ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_PhoenixCCI.a)
-    target_link_libraries(joint1_current_node ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_PhoenixDiagnostics.a)
-    target_link_libraries(joint1_current_node ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_PhoenixPlatform_socketcan.a)
-    target_link_libraries(joint1_current_node ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_PhoenixCanutils.a)
-    target_link_libraries(joint1_current_node ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_PhoenixCore.a)
-endif()
-target_link_libraries(joint1_current_node Threads::Threads)
-ament_target_dependencies(joint1_current_node rclcpp std_msgs)
-
-install(TARGETS joint1_current_node DESTINATION lib/${PROJECT_NAME})
-
-# ---- NUEVO: prueba de control por corriente (sin ROS, solo Phoenix) ----
-add_executable(current_test_v3 src/current_test_v3.cpp)
-
-if (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "arm-linux-gnueabihf")
-    target_link_libraries(current_test_v3 ${CMAKE_SOURCE_DIR}/src/lib/raspberry/libCTRE_Phoenix.a)
-    target_link_libraries(current_test_v3 ${CMAKE_SOURCE_DIR}/src/lib/raspberry/libCTRE_PhoenixCCI.a)
-    target_link_libraries(current_test_v3 ${CMAKE_SOURCE_DIR}/src/lib/raspberry/libCTRE_PhoenixDiagnostics.a)
-    target_link_libraries(current_test_v3 ${CMAKE_SOURCE_DIR}/src/lib/raspberry/libCTRE_PhoenixPlatform_socketcan.a)
-    target_link_libraries(current_test_v3 ${CMAKE_SOURCE_DIR}/src/lib/raspberry/libCTRE_PhoenixCanutils.a)
-    target_link_libraries(current_test_v3 ${CMAKE_SOURCE_DIR}/src/lib/raspberry/libCTRE_PhoenixCore.a)
-elseif (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "aarch64-linux-gnu")
-    target_link_libraries(current_test_v3 ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_Phoenix.a)
-    target_link_libraries(current_test_v3 ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_PhoenixCCI.a)
-    target_link_libraries(current_test_v3 ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_PhoenixDiagnostics.a)
-    target_link_libraries(current_test_v3 ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_PhoenixPlatform_socketcan.a)
-    target_link_libraries(current_test_v3 ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_PhoenixCanutils.a)
-    target_link_libraries(current_test_v3 ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_PhoenixCore.a)
-else()
-    target_link_libraries(current_test_v3 ${CMAKE_SOURCE_DIR}/src/lib/x86-64/libCTRE_Phoenix.a)
-    target_link_libraries(current_test_v3 ${CMAKE_SOURCE_DIR}/src/lib/x86-64/libCTRE_PhoenixCCI.a)
-    target_link_libraries(current_test_v3 ${CMAKE_SOURCE_DIR}/src/lib/x86-64/libCTRE_PhoenixDiagnostics.a)
-    target_link_libraries(current_test_v3 ${CMAKE_SOURCE_DIR}/src/lib/x86-64/libCTRE_PhoenixPlatform_socketcan.a)
-    target_link_libraries(current_test_v3 ${CMAKE_SOURCE_DIR}/src/lib/x86-64/libCTRE_PhoenixCanutils.a)
-    target_link_libraries(current_test_v3 ${CMAKE_SOURCE_DIR}/src/lib/x86-64/libCTRE_PhoenixCore.a)
-endif()
-
-target_link_libraries(current_test_v3 Threads::Threads)
-# ---- fin de lo nuevo ----
-
 
 
 install(TARGETS test_percent_output
@@ -179,10 +136,6 @@ DESTINATION lib/${PROJECT_NAME}
 )
 install(TARGETS
 drive_only_can_tank
-DESTINATION lib/${PROJECT_NAME}
-)
-install(TARGETS
-current_test_v3
 DESTINATION lib/${PROJECT_NAME}
 )
 
