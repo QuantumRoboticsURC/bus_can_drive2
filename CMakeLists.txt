@@ -17,9 +17,41 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
+find_package (Threads REQUIRED)
+find_package(SDL2 REQUIRED)
+
+include_directories("${PROJECT_SOURCE_DIR}/src/include")
+
+add_executable(drive_can ${PROJECT_SOURCE_DIR}/src/drive_can.cpp)
+if (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "arm-linux-gnueabihf") # Jetson TK1 / Pi
+    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/raspberry/libCTRE_Phoenix.a)
+    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/raspberry/libCTRE_PhoenixCCI.a)
+    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/raspberry/libCTRE_PhoenixDiagnostics.a)
+    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/raspberry/libCTRE_PhoenixPlatform_socketcan.a)
+    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/raspberry/libCTRE_PhoenixCanutils.a)
+    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/raspberry/libCTRE_PhoenixCore.a)
+elseif (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "aarch64-linux-gnu") # Jetson TX2
+    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_Phoenix.a)
+    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_PhoenixCCI.a)
+    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_PhoenixDiagnostics.a)
+    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_PhoenixPlatform_socketcan.a)
+    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_PhoenixCanutils.a)
+    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_PhoenixCore.a)
+else()
+    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/x86-64/libCTRE_Phoenix.a)
+    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/x86-64/libCTRE_PhoenixCCI.a)
+    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/x86-64/libCTRE_PhoenixDiagnostics.a)
+    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/x86-64/libCTRE_PhoenixPlatform_socketcan.a)
+    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/x86-64/libCTRE_PhoenixCanutils.a)
+    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/x86-64/libCTRE_PhoenixCore.a)
+endif()
+target_link_libraries(drive_can Threads::Threads)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -31,5 +63,12 @@ if(BUILD_TESTING)
   #set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 endif()
+
+
+ament_target_dependencies(drive_can rclcpp geometry_msgs std_msgs)
+install(TARGETS
+drive_can 
+DESTINATION lib/${PROJECT_NAME}
+)
 
 ament_package()
