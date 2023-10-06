@@ -27,12 +27,12 @@ bool start_config = true;
 
 /* make some talons for arm train */
 TalonSRX srxArm1(11);
-TalonSRX srxArm2(12);
-TalonSRX srxArm3(13);
-TalonSRX srxArm4(14);
+TalonSRX srxSwrvFL(12);
+TalonSRX srxSwrvFr(13);
+TalonSRX srxSwrvBl(14);
 TalonSRX srxArm5(15); //Gripper
 TalonSRX srxArm6(16); //Prismatico
-TalonSRX srxArmLab(21);//POR PONER
+TalonSRX srxSwrvBr(21);
 
 /* make some talons for drive train */
 TalonFX talFrontLeft(0);
@@ -51,37 +51,37 @@ void initDrive()
 {
 /* Factory default hardware to prevent unexpected behavior */
 srxArm1.ConfigFactoryDefault();
-srxArm2.ConfigFactoryDefault();
-srxArm3.ConfigFactoryDefault();
-srxArm4.ConfigFactoryDefault();
+srxSwrvFL.ConfigFactoryDefault();
+srxSwrvFr.ConfigFactoryDefault();
+srxSwrvBl.ConfigFactoryDefault();
 srxArm5.ConfigFactoryDefault();
 srxArm6.ConfigFactoryDefault();
 
-srxArmLab.ConfigFactoryDefault();
+srxSwrvBr.ConfigFactoryDefault();
 
 
 srxArm1.SetInverted(false);
-srxArm2.SetInverted(false);
-srxArm3.SetInverted(false);
-srxArm4.SetInverted(false);
+srxSwrvFL.SetInverted(false);
+srxSwrvFr.SetInverted(false);
+srxSwrvBl.SetInverted(false);
 
-srxArmLab.SetInverted(false);
+srxSwrvBr.SetInverted(false);
 
 srxArm1.SetSensorPhase(false);
-srxArm2.SetSensorPhase(false);
-srxArm3.SetSensorPhase(false);
-srxArm4.SetSensorPhase(false);
+srxSwrvFL.SetSensorPhase(false);
+srxSwrvFr.SetSensorPhase(false);
+srxSwrvBl.SetSensorPhase(false);
 
-srxArmLab.SetSensorPhase(false);
+srxSwrvBr.SetSensorPhase(false);
 
 
 /* choose the sensor and sensor direction */
 srxArm1.ConfigSelectedFeedbackSensor(FeedbackDevice::CTRE_MagEncoder_Absolute, 0, 10);
-srxArm2.ConfigSelectedFeedbackSensor(FeedbackDevice::CTRE_MagEncoder_Absolute, 0, 10);
-srxArm3.ConfigSelectedFeedbackSensor(FeedbackDevice::CTRE_MagEncoder_Absolute, 0, 10);
-srxArm4.ConfigSelectedFeedbackSensor(FeedbackDevice::CTRE_MagEncoder_Absolute, 0, 10);
+srxSwrvFL.ConfigSelectedFeedbackSensor(FeedbackDevice::CTRE_MagEncoder_Absolute, 0, 10);
+srxSwrvFr.ConfigSelectedFeedbackSensor(FeedbackDevice::CTRE_MagEncoder_Absolute, 0, 10);
+srxSwrvBl.ConfigSelectedFeedbackSensor(FeedbackDevice::CTRE_MagEncoder_Absolute, 0, 10);
 
-srxArmLab.ConfigSelectedFeedbackSensor(FeedbackDevice::CTRE_MagEncoder_Absolute, 0, 10);
+srxSwrvBr.ConfigSelectedFeedbackSensor(FeedbackDevice::CTRE_MagEncoder_Absolute, 0, 10);
 
 //srxArm1.SetSelectedSensorPosition(offset1, 0, 10);
 
@@ -92,20 +92,20 @@ srxArm1.ConfigNominalOutputReverse(0, 10);
 srxArm1.ConfigPeakOutputForward(1, 10);
 srxArm1.ConfigPeakOutputReverse(-1, 10);
 
-srxArm2.ConfigNominalOutputForward(0, 10);
-srxArm2.ConfigNominalOutputReverse(0, 10);
-srxArm2.ConfigPeakOutputForward(1, 10);
-srxArm2.ConfigPeakOutputReverse(-1, 10);
+srxSwrvFL.ConfigNominalOutputForward(0, 10);
+srxSwrvFL.ConfigNominalOutputReverse(0, 10);
+srxSwrvFL.ConfigPeakOutputForward(1, 10);
+srxSwrvFL.ConfigPeakOutputReverse(-1, 10);
 
-srxArm3.ConfigNominalOutputForward(0, 10);
-srxArm3.ConfigNominalOutputReverse(0, 10);
-srxArm3.ConfigPeakOutputForward(1, 10);
-srxArm3.ConfigPeakOutputReverse(-1, 10);
+srxSwrvFr.ConfigNominalOutputForward(0, 10);
+srxSwrvFr.ConfigNominalOutputReverse(0, 10);
+srxSwrvFr.ConfigPeakOutputForward(1, 10);
+srxSwrvFr.ConfigPeakOutputReverse(-1, 10);
 
-srxArm4.ConfigNominalOutputForward(0, 10);
-srxArm4.ConfigNominalOutputReverse(0, 10);
-srxArm4.ConfigPeakOutputForward(1, 10);
-srxArm4.ConfigPeakOutputReverse(-1, 10);
+srxSwrvBl.ConfigNominalOutputForward(0, 10);
+srxSwrvBl.ConfigNominalOutputReverse(0, 10);
+srxSwrvBl.ConfigPeakOutputForward(1, 10);
+srxSwrvBl.ConfigPeakOutputReverse(-1, 10);
 
 srxArm5.ConfigNominalOutputForward(0, 10);
 srxArm5.ConfigNominalOutputReverse(0, 10);
@@ -118,10 +118,10 @@ srxArm6.ConfigPeakOutputForward(1, 10);
 srxArm6.ConfigPeakOutputReverse(-1, 10);
 
 
-srxArmLab.ConfigNominalOutputForward(0, 10);
-srxArmLab.ConfigNominalOutputReverse(0, 10);
-srxArmLab.ConfigPeakOutputForward(1, 10);
-srxArmLab.ConfigPeakOutputReverse(-1, 10);
+srxSwrvBr.ConfigNominalOutputForward(0, 10);
+srxSwrvBr.ConfigNominalOutputReverse(0, 10);
+srxSwrvBr.ConfigPeakOutputForward(1, 10);
+srxSwrvBr.ConfigPeakOutputReverse(-1, 10);
 
 /* set closed loop gains in slot0, editar valor de en medio */ 
 /* Set acceleration and vcruise velocity - see documentation */
@@ -134,38 +134,38 @@ srxArm1.ConfigMotionAcceleration(9, 10);
 
 /* set closed loop gains in slot0, editar valor de en medio */ 
 /* Set acceleration and vcruise velocity - see documentation */
-srxArm2.Config_kF(0, 102.3, 10);
-srxArm2.Config_kP(0, 1.967307692, 10); 
-srxArm2.Config_kI(0, 0.005, 10);
-srxArm2.Config_kD(0, 19.67307692, 10);
-srxArm2.ConfigMotionCruiseVelocity(8, 10);
-srxArm2.ConfigMotionAcceleration(7.5, 10);
+srxSwrvFL.Config_kF(0, 102.3, 10);
+srxSwrvFL.Config_kP(0, 1.967307692, 10); 
+srxSwrvFL.Config_kI(0, 0.005, 10);
+srxSwrvFL.Config_kD(0, 19.67307692, 10);
+srxSwrvFL.ConfigMotionCruiseVelocity(8, 10);
+srxSwrvFL.ConfigMotionAcceleration(7.5, 10);
 
 /* set closed loop gains in slot0, editar valor de en medio */ 
 /* Set acceleration and vcruise velocity - see documentation */
-srxArm3.Config_kF(0, 46.5, 10);
-srxArm3.Config_kP(0, 1.794736842, 10); 
-srxArm3.Config_kI(0, 0.001, 10);
-srxArm3.Config_kD(0, 17.94736842, 10);
-srxArm3.ConfigMotionCruiseVelocity(17, 10);
-srxArm3.ConfigMotionAcceleration(16.5, 10);
+srxSwrvFr.Config_kF(0, 46.5, 10);
+srxSwrvFr.Config_kP(0, 1.794736842, 10); 
+srxSwrvFr.Config_kI(0, 0.001, 10);
+srxSwrvFr.Config_kD(0, 17.94736842, 10);
+srxSwrvFr.ConfigMotionCruiseVelocity(17, 10);
+srxSwrvFr.ConfigMotionAcceleration(16.5, 10);
 
 /* set closed loop gains in slot0, editar valor de en medio */ 
 /* Set acceleration and vcruise velocity - see documentation */
-srxArm4.Config_kF(0, 34.1, 10);
-srxArm4.Config_kP(0, 6.2, 10); 
-srxArm4.Config_kI(0, 0.001, 10);
-srxArm4.Config_kD(0, 62.0, 10);
-srxArm4.ConfigMotionCruiseVelocity(23, 10);
-srxArm4.ConfigMotionAcceleration(22.5, 10);
+srxSwrvBl.Config_kF(0, 34.1, 10);
+srxSwrvBl.Config_kP(0, 6.2, 10); 
+srxSwrvBl.Config_kI(0, 0.001, 10);
+srxSwrvBl.Config_kD(0, 62.0, 10);
+srxSwrvBl.ConfigMotionCruiseVelocity(23, 10);
+srxSwrvBl.ConfigMotionAcceleration(22.5, 10);
 
 
-srxArmLab.Config_kF(0, 34.1, 0);
-srxArmLab.Config_kP(0, 9.742857143, 0); 
-srxArmLab.Config_kI(0, 0.001, 0);
-srxArmLab.Config_kD(0, 97.42857143, 0);
-srxArmLab.ConfigMotionCruiseVelocity(23, 0);
-srxArmLab.ConfigMotionAcceleration(22.5, 0);
+srxSwrvBr.Config_kF(0, 34.1, 0);
+srxSwrvBr.Config_kP(0, 9.742857143, 0); 
+srxSwrvBr.Config_kI(0, 0.001, 0);
+srxSwrvBr.Config_kD(0, 97.42857143, 0);
+srxSwrvBr.ConfigMotionCruiseVelocity(23, 0);
+srxSwrvBr.ConfigMotionAcceleration(22.5, 0);
 
 
 /* Factory default hardware to prevent unexpected behavior */
@@ -250,7 +250,7 @@ void sleepApp(int ms)
         std::this_thread::sleep_for(std::chrono::milliseconds(ms));
 }
 
-
+//Esta es la clase que inicializa lo necesario para ROS 2
 class Drive_can: public rclcpp::Node
 {
     private:
@@ -286,6 +286,10 @@ class Drive_can: public rclcpp::Node
 		/* 2048 units/rev * 1 Rotations in either direction */
 		double rght = msg->linear.x + msg->angular.z;
 		double left = msg->linear.x - msg->angular.z;
+		if ((rght == 0.0) and (left == 0)){
+			rght = msg->linear.y;
+			left = msg->linear.y;
+		}
 		double left_targetVelocity=left*6000*2048/600;//left*velocidad que otorga el motor*resolucion enc$
 		double right_targetVelocity=rght*6000*2048/600;//left*velocidad que otorga el motor*resolucion en$
 
@@ -343,92 +347,94 @@ class Drive_can: public rclcpp::Node
 		std::cout << "\tMust be a value from -110 to 110 degrees\n";
 		}
 	}
+	// Motor del swerve izquierdo adelante (antes era el joint 2 del brazo)
 	void frontleftCallback(const std_msgs::msg::Float64::SharedPtr msg) const{
 		ctre::phoenix::unmanaged::FeedEnable(30000);
-		if (msg->data >= 20 && msg->data <= 161){
+		if (msg->data >= -90 && msg->data <= 90){
 		//    int offset2_deg = 33.3984375; //grados, cero horizontal
 		//  double targetPos = (msg.data + offset2_deg) * 4096 / 360;
 		// double targetPos = my_map(msg.data, 10, 161, 510.77, 2228.8);
-		double targetPos = my_map(msg->data,20,161, 1585.55, 3189.62);  
-		srxArm2.Set(ControlMode::MotionMagic, targetPos);
+		double targetPos = my_map(msg->data,-90,90, 1585.55, 3189.62);  
+		srxSwrvFL.Set(ControlMode::MotionMagic, targetPos);
 			//srxArm1.Set(ControlMode::PercentOutput, targetPos);
 
 			/* Prepare line to print */
 			std::stringstream sb;
-			int dif_error = srxArm2.GetSelectedSensorPosition() - targetPos;
+			int dif_error = srxSwrvFL.GetSelectedSensorPosition() - targetPos;
 			std::cout << "\tAxis 2 Output\n";
 			//double sensorPosition = srxArm1.GetSelectedSensorPosition() / 4096 / 24 * 360;
 			//double targetPos = msg.data * 4096 * 24 / 360;
 			std::cout << "\tTarget Position Deg: " << msg->data << " degrees\n";
-			std::cout << "\tEncoder Position Ticks:" << srxArm2.GetSelectedSensorPosition() << "ticks\n";
+			std::cout << "\tEncoder Position Ticks:" << srxSwrvFL.GetSelectedSensorPosition() << "ticks\n";
 			std::cout << "\tEncoder Error:" << dif_error << "\n";
-			std::cout << "\tEncoder Velocity:" << srxArm2.GetSelectedSensorVelocity(0) << "\n\n";
+			std::cout << "\tEncoder Velocity:" << srxSwrvFL.GetSelectedSensorVelocity(0) << "\n\n";
 		}
 		else{
 			std::stringstream sb;
-			std::cout << "\tMust be a value from 0 to 157 degrees\n";
+			std::cout << "\tMust be a value from -90 to 90 degrees\n";
 		}
 	}
+	// Motor del swerve derecho adelante (antes era el joint3 del brazo)
 	void frontrightCallback(const std_msgs::msg::Float64::SharedPtr msg) const{
 		ctre::phoenix::unmanaged::FeedEnable(10000);
-		if (msg->data >= -165.5 && msg->data <= 0){
+		if (msg->data >= -90 && msg->data <= 90){
 			//double x = msg->data;
 			//int in_min = 0;
 			//int in_max = -180;
 			//int out_min = 3563;
 			//int out_max = 1515;
 			//double targetPos = (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-		double targetPos = my_map(msg->data,-165.5 , 0, 658 , 2541);
-			srxArm3.Set(ControlMode::MotionMagic, targetPos);
+		double targetPos = my_map(msg->data,-90 , 90, 658 , 2541);
+			srxSwrvFr.Set(ControlMode::MotionMagic, targetPos);
 			//srxArm1.Set(ControlMode::PercentOutput, targetPos);
 
 			/* Prepare line to print */
 			std::stringstream sb;
-			int dif_error = srxArm3.GetSelectedSensorPosition() - targetPos;
+			int dif_error = srxSwrvFr.GetSelectedSensorPosition() - targetPos;
 			std::cout << "\tAxis 3 Output\n";
 			//double sensorPosition = srxArm1.GetSelectedSensorPosition() / 4096 / 24 * 360;
 			//double targetPos = msg.data * 4096 * 24 / 360;
 			std::cout << "\tTarget Position Deg: " << msg->data << " degrees\n";
-			std::cout << "\tEncoder Position Ticks:" << srxArm3.GetSelectedSensorPosition() << "ticks\n";
+			std::cout << "\tEncoder Position Ticks:" << srxSwrvFr.GetSelectedSensorPosition() << "ticks\n";
 			std::cout << "\tEncoder Error:" << dif_error << "\n";
-			std::cout << "\tEncoder Velocity:" << srxArm3.GetSelectedSensorVelocity(0) << "\n\n";
+			std::cout << "\tEncoder Velocity:" << srxSwrvFr.GetSelectedSensorVelocity(0) << "\n\n";
 		}
 		else{
 			std::stringstream sb;
-			std::cout << "\tMust be a value from 0 to -165 degrees\n";
+			std::cout << "\tMust be a value from -90 to 90 degrees\n";
 		}
 	}
-
+	//Motor del swerve izquierdo atras (antes era el joint 4 del brazo)
 	void backleftCallback(const std_msgs::msg::Float64::SharedPtr msg) const{
-    	ctre::phoenix::unmanaged::FeedEnable(10000); 
-     	if (msg->data >= -135 && msg->data <= 90){
+        ctre::phoenix::unmanaged::FeedEnable(10000); 
+        if (msg->data >= -90 && msg->data <= 90){
         //double x = msg.data;
         //int in_min = -135;
         //int in_max = 90;
         //int out_min = 457;
         //int out_max = 3017;
         //double targetPos = (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-        double targetPos =my_map(msg->data,-135,90,1191,3751);
-        srxArm4.Set(ControlMode::MotionMagic, targetPos);
-        //srxArm4.Set(ControlMode::PercentOutput, targetPos);
+        double targetPos =my_map(msg->data,-90,90,1191,3751);
+        srxSwrvBl.Set(ControlMode::MotionMagic, targetPos);
+        //srxSwrvBl.Set(ControlMode::PercentOutput, targetPos);
 
         /* Prepare line to print */
         std::stringstream sb;
-        int dif_error = srxArm4.GetSelectedSensorPosition() - targetPos;
+        int dif_error = srxSwrvBl.GetSelectedSensorPosition() - targetPos;
         std::cout << "\tAxis 4 Output\n";
         //double sensorPosition = srxArm1.GetSelectedSensorPosition() / 4096 / 24 * 360;
         //double targetPos = msg.data * 4096 * 24 / 360;
         std::cout << "\tTarget Position Deg: " << msg->data << " degrees\n";
-        std::cout << "\tEncoder Position Ticks:" << srxArm4.GetSelectedSensorPosition() << "ticks\n";
+        std::cout << "\tEncoder Position Ticks:" << srxSwrvBl.GetSelectedSensorPosition() << "ticks\n";
         std::cout << "\tEncoder Error:" << dif_error << "\n";
-        std::cout << "\tEncoder Velocity:" << srxArm4.GetSelectedSensorVelocity(0) << "\n\n";
-    	}
-    	else{
-        	std::stringstream sb;
-        	std::cout << "\tMust be a value from -135 to 90 degrees\n";
-    	}
+        std::cout << "\tEncoder Velocity:" << srxSwrvBl.GetSelectedSensorVelocity(0) << "\n\n";
+        }
+        else{
+            std::stringstream sb;
+            std::cout << "\tMust be a value from -135 to 90 degrees\n";
+        }
 	}
-
+    //Motor del swerve derecho atras (antes era el joint2 del brazo del laboratorio) 
 	void backrightCallback(const std_msgs::msg::Float64::SharedPtr msg) const{
     	ctre::phoenix::unmanaged::FeedEnable(10000);  
     	if (msg->data >= -30 && msg->data <= 180){
@@ -438,18 +444,18 @@ class Drive_can: public rclcpp::Node
         int out_min = 1026;
         int out_max = 3413;
         double targetPos = (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-        srxArmLab.Set(ControlMode::MotionMagic, targetPos);
-        //srxArmLab.Set(ControlMode::PercentOutput, msg.data);
+        srxSwrvBr.Set(ControlMode::MotionMagic, targetPos);
+        //srxSwrvBr.Set(ControlMode::PercentOutput, msg.data);
         /* Prepare line to print */
         std::stringstream sb;
-        int dif_error = srxArmLab.GetSelectedSensorPosition() - targetPos;
+        int dif_error = srxSwrvBr.GetSelectedSensorPosition() - targetPos;
         std::cout << "\tAxis 4 Output\n";
         //double sensorPosition = srxArm1.GetSelectedSensorPosition() / 4096 / 24 * 360;
         //double targetPos = msg.data * 4096 * 24 / 360;
         std::cout << "\tTarget Position Deg: " << msg->data << " degrees\n";
-        std::cout << "\tEncoder Position Ticks:" << srxArmLab.GetSelectedSensorPosition() << "ticks\n";
+        std::cout << "\tEncoder Position Ticks:" << srxSwrvBr.GetSelectedSensorPosition() << "ticks\n";
         std::cout << "\tEncoder Error:" << dif_error << "\n";
-        std::cout << "\tEncoder Velocity:" << srxArmLab.GetSelectedSensorVelocity(0) << "\n\n";
+        std::cout << "\tEncoder Velocity:" << srxSwrvBr.GetSelectedSensorVelocity(0) << "\n\n";
     	}
     	else{
         std::stringstream sb;
