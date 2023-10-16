@@ -29,7 +29,7 @@ public:
         IntermediateNode() : Node("intermediate_node") {
         
         subscription_drive_teleop = this->create_subscription<Twist>("/cmd_vel", 10, std::bind(&IntermediateNode::driveTeleopCallback, this, _1));
-        subscription_angles = this->create_subscription<std_msgs::msg::Float64>("/angulos", 10, std::bind(&IntermediateNode::anglesCallback, this, _1));
+        subscription_angles = this->create_subscription<std_msgs::msg::Float64>("/angle_swr", 10, std::bind(&IntermediateNode::anglesCallback, this, _1));
 
         publisher_front_left  = this->create_publisher<std_msgs::msg::Float64>("/swerve/front_left", 10);
         publisher_front_right = this->create_publisher<std_msgs::msg::Float64>("/swerve/front_right", 10);

@@ -8,5 +8,11 @@ def generate_launch_description():
             executable='drive_can',
             name='drive_can',
             output='screen'
+        ),
+        Node(
+            package='bus_can_drive2',
+            executable='intermediate_node',
+            name='intermediary              ',
+            output='screen'
         )
     ])

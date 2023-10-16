@@ -437,10 +437,10 @@ class Drive_can: public rclcpp::Node
     //Motor del swerve derecho atras (antes era el joint2 del brazo del laboratorio) 
 	void backrightCallback(const std_msgs::msg::Float64::SharedPtr msg) const{
     	ctre::phoenix::unmanaged::FeedEnable(10000);  
-    	if (msg->data >= -30 && msg->data <= 180){
+    	if (msg->data >= -90 && msg->data <= 90){
         double x = msg->data;
-        int in_min = -30;
-        int in_max = 180;
+        int in_min = -90;
+        int in_max = 90;
         int out_min = 1026;
         int out_max = 3413;
         double targetPos = (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
@@ -459,7 +459,7 @@ class Drive_can: public rclcpp::Node
     	}
     	else{
         std::stringstream sb;
-        std::cout << "\tMust be a value from 0 to 90 degrees\n";
+        std::cout << "\tMust be a value from -90 to 90 degrees\n";
     	}
 	}	
 
