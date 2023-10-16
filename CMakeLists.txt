@@ -27,7 +27,6 @@ find_package (Threads REQUIRED)
 find_package(SDL2 REQUIRED)
 
 include_directories("${PROJECT_SOURCE_DIR}/src/include")
-
 add_executable(drive_can ${PROJECT_SOURCE_DIR}/src/drive_can.cpp)
 if (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "arm-linux-gnueabihf") # Jetson TK1 / Pi
     target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/raspberry/libCTRE_Phoenix.a)
@@ -52,7 +51,6 @@ else()
     target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/x86-64/libCTRE_PhoenixCore.a)
 endif()
 target_link_libraries(drive_can Threads::Threads)
-
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
@@ -64,10 +62,13 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-
+add_executable(intermediate_node ${PROJECT_SOURCE_DIR}/src/intermediary.cpp)
+#target_link_libraries(intermediate_node Threads::Threads)
 ament_target_dependencies(drive_can rclcpp geometry_msgs std_msgs)
+ament_target_dependencies(intermediate_node rclcpp geometry_msgs std_msgs)
 install(TARGETS
 drive_can 
+intermediate_node
 DESTINATION lib/${PROJECT_NAME}
 )
 
