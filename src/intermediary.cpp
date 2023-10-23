@@ -9,12 +9,12 @@ using Twist = geometry_msgs::msg::Twist; // utilizar velocidad angular
 
 class IntermediateNode : public rclcpp::Node {
 
-private: 
+private: //(crear variables)
 
-	 rclcpp::Subscription<Twist>::SharedPtr subscription_drive_teleop; // puntero (subscripition)
+	 rclcpp::Subscription<Twist>::SharedPtr subscription_drive_teleop; // puntero (subscribirte a los mensajes que manda el dirve_teleop)
         rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr subscription_angles; // puntero (subscription)
 
-        rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr publisher_front_left; // apuntadores especificos
+        rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr publisher_front_left; // apuntadores especificos (crear los publicadores que mandan datos (drive_can))
     	rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr publisher_front_right;
     	rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr publisher_back_left;
     	rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr publisher_back_right;
@@ -64,7 +64,7 @@ public:
                 publish_angles();
             }
     }
-        
+        // condiciones del control
         void anglesCallback(const std_msgs::msg::Float64::SharedPtr msg){
         
             if(twist.linear.y == 0  and twist.angular.z == 0){
