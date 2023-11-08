@@ -12,7 +12,7 @@ def generate_launch_description():
         Node(
             package='bus_can_drive2',
             executable='intermediate_node',
-            name='intermediary              ',
+            name='intermediary',
             output='screen'
         )
     ])

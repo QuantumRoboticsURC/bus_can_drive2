@@ -28,11 +28,11 @@ bool start_config = true;
 /* make some talons for arm train */
 TalonSRX srxArm1(11);
 TalonSRX srxSwrvFL(12);
-TalonSRX srxSwrvFr(13);
-TalonSRX srxSwrvBl(14);
+TalonSRX srxSwrvFr(16);
+TalonSRX srxSwrvBl(13);
 TalonSRX srxArm5(15); //Gripper
-TalonSRX srxArm6(16); //Prismatico
-TalonSRX srxSwrvBr(21);
+TalonSRX srxArm6(21); //Prismatico
+TalonSRX srxSwrvBr(14);
 
 /* make some talons for drive train */
 TalonFX talFrontLeft(0);
@@ -273,7 +273,7 @@ class Drive_can: public rclcpp::Node
     	    front_left_ =this->create_subscription<std_msgs::msg::Float64>("/swerve/front_left", 10, std::bind(&Drive_can::frontleftCallback, this, _1));
     	    front_right_ =this->create_subscription<std_msgs::msg::Float64>("/swerve/front_right", 10, std::bind(&Drive_can::frontrightCallback, this, _1));
     	    back_left_ =this->create_subscription<std_msgs::msg::Float64>("/swerve/back_left", 10, std::bind(&Drive_can::backleftCallback, this, _1));
-			back_right_ =this->create_subscription<std_msgs::msg::Float64>("/swerve/back_right", 10, std::bind(&Drive_can::backrightCallback, this, _1));
+	    back_right_ =this->create_subscription<std_msgs::msg::Float64>("/swerve/back_right", 10, std::bind(&Drive_can::backrightCallback, this, _1));
     	    //centrifuge_ =this->create_subscription<std_msgs::msg::Float64>("/swerve/centrifuge", 10, std::bind(&Drive_can::centrifugeCallback, this, _1));
     	    //prism_ =this->create_subscription<std_msgs::msg::Float64>("/arm_teleop_prism", 10, std::bind(&Drive_can::prism_callback, this, std::placeholders::_1));
     	    
@@ -284,8 +284,8 @@ class Drive_can: public rclcpp::Node
     void velocityCallback(const Twist::SharedPtr msg) const{
 		/* Magic velocity */
 		/* 2048 units/rev * 1 Rotations in either direction */
-		double rght = msg->linear.x + msg->angular.z;
-		double left = msg->linear.x - msg->angular.z;
+		double rght = -(msg->linear.x + msg->angular.z);
+		double left = -(msg->linear.x - msg->angular.z);
 		if ((rght == 0.0) and (left == 0)){
 			rght = msg->linear.y;
 			left = msg->linear.y;
@@ -347,14 +347,14 @@ class Drive_can: public rclcpp::Node
 		std::cout << "\tMust be a value from -110 to 110 degrees\n";
 		}
 	}
-	// Motor del swerve izquierdo adelante (antes era el joint 2 del brazo)
+	// Motor del swerve izquierdo adelante (antes era el joint 3 del brazo)PENDIENTE
 	void frontleftCallback(const std_msgs::msg::Float64::SharedPtr msg) const{
 		ctre::phoenix::unmanaged::FeedEnable(30000);
 		if (msg->data >= -90 && msg->data <= 90){
 		//    int offset2_deg = 33.3984375; //grados, cero horizontal
 		//  double targetPos = (msg.data + offset2_deg) * 4096 / 360;
 		// double targetPos = my_map(msg.data, 10, 161, 510.77, 2228.8);
-		double targetPos = my_map(msg->data,-90,90, 1585.55, 3189.62);  
+		double targetPos = my_map(msg->data,-90,90, 2065, 4113);  
 		srxSwrvFL.Set(ControlMode::MotionMagic, targetPos);
 			//srxArm1.Set(ControlMode::PercentOutput, targetPos);
 
@@ -384,7 +384,7 @@ class Drive_can: public rclcpp::Node
 			//int out_min = 3563;
 			//int out_max = 1515;
 			//double targetPos = (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-		double targetPos = my_map(msg->data,-90 , 90, 658 , 2541);
+		double targetPos = my_map(msg->data,-90 , 90, 1181, 3229);
 			srxSwrvFr.Set(ControlMode::MotionMagic, targetPos);
 			//srxArm1.Set(ControlMode::PercentOutput, targetPos);
 
@@ -414,7 +414,7 @@ class Drive_can: public rclcpp::Node
         //int out_min = 457;
         //int out_max = 3017;
         //double targetPos = (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-        double targetPos =my_map(msg->data,-90,90,1191,3751);
+        double targetPos =my_map(msg->data,-90,90,1136,3184);
         srxSwrvBl.Set(ControlMode::MotionMagic, targetPos);
         //srxSwrvBl.Set(ControlMode::PercentOutput, targetPos);
 
@@ -441,8 +441,8 @@ class Drive_can: public rclcpp::Node
         double x = msg->data;
         int in_min = -90;
         int in_max = 90;
-        int out_min = 1026;
-        int out_max = 3413;
+        int out_min = 1420;
+        int out_max = 3468;
         double targetPos = (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
         srxSwrvBr.Set(ControlMode::MotionMagic, targetPos);
         //srxSwrvBr.Set(ControlMode::PercentOutput, msg.data);
