@@ -62,15 +62,15 @@ srxSwrvBr.ConfigFactoryDefault();
 
 srxArm1.SetInverted(false);
 srxSwrvFL.SetInverted(false);
-srxSwrvFr.SetInverted(false);
-srxSwrvBl.SetInverted(false);
+srxSwrvFr.SetInverted(true);
+srxSwrvBl.SetInverted(true);
 
 srxSwrvBr.SetInverted(false);
 
 srxArm1.SetSensorPhase(false);
 srxSwrvFL.SetSensorPhase(false);
-srxSwrvFr.SetSensorPhase(false);
-srxSwrvBl.SetSensorPhase(false);
+srxSwrvFr.SetSensorPhase(true);
+srxSwrvBl.SetSensorPhase(true);
 
 srxSwrvBr.SetSensorPhase(false);
 
@@ -134,12 +134,12 @@ srxArm1.ConfigMotionAcceleration(9, 10);
 
 /* set closed loop gains in slot0, editar valor de en medio */ 
 /* Set acceleration and vcruise velocity - see documentation */
-srxSwrvFL.Config_kF(0, 102.3, 10);
-srxSwrvFL.Config_kP(0, 1.967307692, 10); 
-srxSwrvFL.Config_kI(0, 0.005, 10);
-srxSwrvFL.Config_kD(0, 19.67307692, 10);
-srxSwrvFL.ConfigMotionCruiseVelocity(8, 10);
-srxSwrvFL.ConfigMotionAcceleration(7.5, 10);
+srxSwrvFL.Config_kF(0, 46.5, 10);
+srxSwrvFL.Config_kP(0, 1.794736842, 10); 
+srxSwrvFL.Config_kI(0, 0.001, 10);
+srxSwrvFL.Config_kD(0, 17.94736842, 10);
+srxSwrvFL.ConfigMotionCruiseVelocity(17, 10);
+srxSwrvFL.ConfigMotionAcceleration(16.5, 10);
 
 /* set closed loop gains in slot0, editar valor de en medio */ 
 /* Set acceleration and vcruise velocity - see documentation */
@@ -281,7 +281,7 @@ class Drive_can: public rclcpp::Node
 			}
 
     
-    void velocityCallback(const Twist::SharedPtr msg) const{
+	void velocityCallback(const Twist::SharedPtr msg) const{
 		/* Magic velocity */
 		/* 2048 units/rev * 1 Rotations in either direction */
 		double rght = -(msg->linear.x + msg->angular.z);
@@ -317,7 +317,7 @@ class Drive_can: public rclcpp::Node
 		std::cout << "\tOutput%:" << talFrontLeft.GetMotorOutputPercent() << "\n";
 		std::cout << "\tEncoder Velocity:" << talFrontLeft.GetSelectedSensorVelocity(0) << "\n";
 		std::cout << "\tTeorical Velocity:" << left_targetVelocity << "\n\n";
-    }
+     }
 	    
 	void joint1Callback(const std_msgs::msg::Float64::SharedPtr msg) const{
 		ctre::phoenix::unmanaged::FeedEnable(10000);  
@@ -354,7 +354,7 @@ class Drive_can: public rclcpp::Node
 		//    int offset2_deg = 33.3984375; //grados, cero horizontal
 		//  double targetPos = (msg.data + offset2_deg) * 4096 / 360;
 		// double targetPos = my_map(msg.data, 10, 161, 510.77, 2228.8);
-		double targetPos = my_map(msg->data,-90,90, 2065, 4113);  
+		double targetPos = my_map(msg->data,-90,90, 2063, 4111);  
 		srxSwrvFL.Set(ControlMode::MotionMagic, targetPos);
 			//srxArm1.Set(ControlMode::PercentOutput, targetPos);
 
@@ -384,7 +384,7 @@ class Drive_can: public rclcpp::Node
 			//int out_min = 3563;
 			//int out_max = 1515;
 			//double targetPos = (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-		double targetPos = my_map(msg->data,-90 , 90, 1181, 3229);
+		double targetPos = my_map(msg->data,-90 , 90, 1005, 3053);
 			srxSwrvFr.Set(ControlMode::MotionMagic, targetPos);
 			//srxArm1.Set(ControlMode::PercentOutput, targetPos);
 
@@ -414,7 +414,7 @@ class Drive_can: public rclcpp::Node
         //int out_min = 457;
         //int out_max = 3017;
         //double targetPos = (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-        double targetPos =my_map(msg->data,-90,90,1136,3184);
+        double targetPos =my_map(msg->data,-90,90,824,2872);
         srxSwrvBl.Set(ControlMode::MotionMagic, targetPos);
         //srxSwrvBl.Set(ControlMode::PercentOutput, targetPos);
 
