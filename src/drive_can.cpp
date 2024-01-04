@@ -242,6 +242,8 @@ talBackRight.Config_kP(0, 0.16084905660, 10);
 talBackRight.Config_kI(0, 0.001, 10);
 talBackRight.Config_kD(0, 1.68, 10);
 
+
+
 }
 
 /* simple wrapper for code cleanup */
@@ -263,6 +265,11 @@ class Drive_can: public rclcpp::Node
 		rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr back_right_;
         rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr centrifuge_;
         rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr prism_;
+		
+		bool front_left_checker;
+		bool front_right_checker;
+		bool back_left_checker;
+		bool back_right_checker;
         
         
         
@@ -276,47 +283,53 @@ class Drive_can: public rclcpp::Node
 			back_right_ =this->create_subscription<std_msgs::msg::Float64>("/swerve/back_right", 10, std::bind(&Drive_can::backrightCallback, this, _1));
     	    //centrifuge_ =this->create_subscription<std_msgs::msg::Float64>("/swerve/centrifuge", 10, std::bind(&Drive_can::centrifugeCallback, this, _1));
     	    //prism_ =this->create_subscription<std_msgs::msg::Float64>("/arm_teleop_prism", 10, std::bind(&Drive_can::prism_callback, this, std::placeholders::_1));
-    	    
+    	    front_left_checker=false;
+			front_right_checker=false;
+			back_left_checker=false;
+			back_right_checker=false;
     	    
 			}
 
     
     void velocityCallback(const Twist::SharedPtr msg) const{
-		/* Magic velocity */
-		/* 2048 units/rev * 1 Rotations in either direction */
-		double rght = msg->linear.x + msg->angular.z;
-		double left = msg->linear.x - msg->angular.z;
-		if ((rght == 0.0) and (left == 0)){
-			rght = msg->linear.y;
-			left = msg->linear.y;
-		}
-		double left_targetVelocity=left*6000*2048/600;//left*velocidad que otorga el motor*resolucion enc$
-		double right_targetVelocity=rght*6000*2048/600;//left*velocidad que otorga el motor*resolucion en$
+		if(front_left_checker and front_right_checker and back_left_checker and back_right_checker){
 
-		ctre::phoenix::unmanaged::FeedEnable(5000);
-		if (left == 0){
-		    talFrontLeft.Set (ControlMode::PercentOutput, left);
-		    talBackLeft.Set  (ControlMode::PercentOutput, left);
-		}
-		else{
-		    talFrontLeft.Set (ControlMode::Velocity, left_targetVelocity);
-		    talBackLeft.Set  (ControlMode::Velocity, left_targetVelocity);
-		}
-		if (rght == 0){
-		    talFrontRight.Set (ControlMode::PercentOutput, rght);
-		    talBackRight.Set  (ControlMode::PercentOutput, rght);
-		}
-		else{
-		    talFrontRight.Set (ControlMode::Velocity, right_targetVelocity);
-		    talBackRight.Set  (ControlMode::Velocity, right_targetVelocity);
-		}
+			/* Magic velocity */
+			/* 2048 units/rev * 1 Rotations in either direction */
+			double rght = msg->linear.x + msg->angular.z;
+			double left = msg->linear.x - msg->angular.z;
+			if ((rght == 0.0) and (left == 0)){
+				rght = msg->linear.y;
+				left = msg->linear.y;
+			}
+			double left_targetVelocity=left*6000*2048/600;//left*velocidad que otorga el motor*resolucion enc$
+			double right_targetVelocity=rght*6000*2048/600;//left*velocidad que otorga el motor*resolucion en$
 
-		/*Get current Talon SRX motor output */
-		std::stringstream sb;
-		/* Prepare line to print */
-		std::cout << "\tOutput%:" << talFrontLeft.GetMotorOutputPercent() << "\n";
-		std::cout << "\tEncoder Velocity:" << talFrontLeft.GetSelectedSensorVelocity(0) << "\n";
-		std::cout << "\tTeorical Velocity:" << left_targetVelocity << "\n\n";
+			ctre::phoenix::unmanaged::FeedEnable(5000);
+			if (left == 0){
+				talFrontLeft.Set (ControlMode::PercentOutput, left);
+				talBackLeft.Set  (ControlMode::PercentOutput, left);
+			}
+			else{
+				talFrontLeft.Set (ControlMode::Velocity, left_targetVelocity);
+				talBackLeft.Set  (ControlMode::Velocity, left_targetVelocity);
+			}
+			if (rght == 0){
+				talFrontRight.Set (ControlMode::PercentOutput, rght);
+				talBackRight.Set  (ControlMode::PercentOutput, rght);
+			}
+			else{
+				talFrontRight.Set (ControlMode::Velocity, right_targetVelocity);
+				talBackRight.Set  (ControlMode::Velocity, right_targetVelocity);
+			}
+
+			/*Get current Talon SRX motor output */
+			std::stringstream sb;
+			/* Prepare line to print */
+			std::cout << "\tOutput%:" << talFrontLeft.GetMotorOutputPercent() << "\n";
+			std::cout << "\tEncoder Velocity:" << talFrontLeft.GetSelectedSensorVelocity(0) << "\n";
+			std::cout << "\tTeorical Velocity:" << left_targetVelocity << "\n\n";
+		}
     }
 	    
 	void joint1Callback(const std_msgs::msg::Float64::SharedPtr msg) const{
@@ -348,7 +361,7 @@ class Drive_can: public rclcpp::Node
 		}
 	}
 	// Motor del swerve izquierdo adelante (antes era el joint 2 del brazo)
-	void frontleftCallback(const std_msgs::msg::Float64::SharedPtr msg) const{
+	void frontleftCallback(const std_msgs::msg::Float64::SharedPtr msg) {
 		ctre::phoenix::unmanaged::FeedEnable(30000);
 		if (msg->data >= -90 && msg->data <= 90){
 		//    int offset2_deg = 33.3984375; //grados, cero horizontal
@@ -361,6 +374,7 @@ class Drive_can: public rclcpp::Node
 			/* Prepare line to print */
 			std::stringstream sb;
 			int dif_error = srxSwrvFL.GetSelectedSensorPosition() - targetPos;
+			front_left_checker=dif_error<170.66 and dif_error>-170.66;
 			std::cout << "\tAxis 2 Output\n";
 			//double sensorPosition = srxArm1.GetSelectedSensorPosition() / 4096 / 24 * 360;
 			//double targetPos = msg.data * 4096 * 24 / 360;
@@ -375,7 +389,7 @@ class Drive_can: public rclcpp::Node
 		}
 	}
 	// Motor del swerve derecho adelante (antes era el joint3 del brazo)
-	void frontrightCallback(const std_msgs::msg::Float64::SharedPtr msg) const{
+	void frontrightCallback(const std_msgs::msg::Float64::SharedPtr msg) {
 		ctre::phoenix::unmanaged::FeedEnable(10000);
 		if (msg->data >= -90 && msg->data <= 90){
 			//double x = msg->data;
@@ -391,6 +405,7 @@ class Drive_can: public rclcpp::Node
 			/* Prepare line to print */
 			std::stringstream sb;
 			int dif_error = srxSwrvFr.GetSelectedSensorPosition() - targetPos;
+			front_right_checker=dif_error<170.66 and dif_error>-170.66;
 			std::cout << "\tAxis 3 Output\n";
 			//double sensorPosition = srxArm1.GetSelectedSensorPosition() / 4096 / 24 * 360;
 			//double targetPos = msg.data * 4096 * 24 / 360;
@@ -405,7 +420,7 @@ class Drive_can: public rclcpp::Node
 		}
 	}
 	//Motor del swerve izquierdo atras (antes era el joint 4 del brazo)
-	void backleftCallback(const std_msgs::msg::Float64::SharedPtr msg) const{
+	void backleftCallback(const std_msgs::msg::Float64::SharedPtr msg) {
         ctre::phoenix::unmanaged::FeedEnable(10000); 
         if (msg->data >= -90 && msg->data <= 90){
         //double x = msg.data;
@@ -421,6 +436,7 @@ class Drive_can: public rclcpp::Node
         /* Prepare line to print */
         std::stringstream sb;
         int dif_error = srxSwrvBl.GetSelectedSensorPosition() - targetPos;
+		back_left_checker=dif_error<170.66 and dif_error>-170.66;
         std::cout << "\tAxis 4 Output\n";
         //double sensorPosition = srxArm1.GetSelectedSensorPosition() / 4096 / 24 * 360;
         //double targetPos = msg.data * 4096 * 24 / 360;
@@ -434,8 +450,9 @@ class Drive_can: public rclcpp::Node
             std::cout << "\tMust be a value from -135 to 90 degrees\n";
         }
 	}
+
     //Motor del swerve derecho atras (antes era el joint2 del brazo del laboratorio) 
-	void backrightCallback(const std_msgs::msg::Float64::SharedPtr msg) const{
+	void backrightCallback(const std_msgs::msg::Float64::SharedPtr msg) {
     	ctre::phoenix::unmanaged::FeedEnable(10000);  
     	if (msg->data >= -90 && msg->data <= 90){
         double x = msg->data;
@@ -449,6 +466,7 @@ class Drive_can: public rclcpp::Node
         /* Prepare line to print */
         std::stringstream sb;
         int dif_error = srxSwrvBr.GetSelectedSensorPosition() - targetPos;
+		back_right_checker=dif_error<170.66 and dif_error>-170.66;
         std::cout << "\tAxis 4 Output\n";
         //double sensorPosition = srxArm1.GetSelectedSensorPosition() / 4096 / 24 * 360;
         //double targetPos = msg.data * 4096 * 24 / 360;
