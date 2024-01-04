@@ -49,10 +49,10 @@ public:
             // condiciones del control
             if (msg->linear.y != 0 and msg->angular.z == 0){
                 
-                frontLeftAngle  = 90.0;
+                frontLeftAngle  = -90.0;
                 frontRightAngle = 90.0;
                 backLeftAngle   = 90.0;
-                backRightAngle  = 90.0;
+                backRightAngle  = -90.0;
                 publish_angles();
             }
             if(msg->angular.z != 0 and msg->linear.y == 0){

@@ -280,7 +280,7 @@ class Drive_can: public rclcpp::Node
     	    front_left_ =this->create_subscription<std_msgs::msg::Float64>("/swerve/front_left", 10, std::bind(&Drive_can::frontleftCallback, this, _1));
     	    front_right_ =this->create_subscription<std_msgs::msg::Float64>("/swerve/front_right", 10, std::bind(&Drive_can::frontrightCallback, this, _1));
     	    back_left_ =this->create_subscription<std_msgs::msg::Float64>("/swerve/back_left", 10, std::bind(&Drive_can::backleftCallback, this, _1));
-	    back_right_ =this->create_subscription<std_msgs::msg::Float64>("/swerve/back_right", 10, std::bind(&Drive_can::backrightCallback, this, _1));
+	        back_right_ =this->create_subscription<std_msgs::msg::Float64>("/swerve/back_right", 10, std::bind(&Drive_can::backrightCallback, this, _1));
     	    //centrifuge_ =this->create_subscription<std_msgs::msg::Float64>("/swerve/centrifuge", 10, std::bind(&Drive_can::centrifugeCallback, this, _1));
     	    //prism_ =this->create_subscription<std_msgs::msg::Float64>("/arm_teleop_prism", 10, std::bind(&Drive_can::prism_callback, this, std::placeholders::_1));
     	    front_left_checker=false;
@@ -292,15 +292,20 @@ class Drive_can: public rclcpp::Node
 
     
 	void velocityCallback(const Twist::SharedPtr msg) const{
+		bool check =front_left_checker and front_right_checker and back_left_checker and back_right_checker;
+		std::cout<<check<<"\n";
 		if(front_left_checker and front_right_checker and back_left_checker and back_right_checker){
-
 			/* Magic velocity */
 			/* 2048 units/rev * 1 Rotations in either direction */
-			double rght = -(msg->linear.x + msg->angular.z);
-			double left = -(msg->linear.x - msg->angular.z);
+			double rght = (msg->linear.x + msg->angular.z);
+			double left = (msg->linear.x - msg->angular.z);
 			if ((rght == 0.0) and (left == 0)){
 				rght = msg->linear.y;
 				left = msg->linear.y;
+			}
+            else if (msg->angular.z ==0){
+                rght = -rght;
+                left = -left;
 			}
 			double left_targetVelocity=left*6000*2048/600;//left*velocidad que otorga el motor*resolucion enc$
 			double right_targetVelocity=rght*6000*2048/600;//left*velocidad que otorga el motor*resolucion en$
@@ -310,18 +315,26 @@ class Drive_can: public rclcpp::Node
 				talFrontLeft.Set (ControlMode::PercentOutput, left);
 				talBackLeft.Set  (ControlMode::PercentOutput, left);
 			}
-			else{
+			else if(msg->linear.y == 0){
 				talFrontLeft.Set (ControlMode::Velocity, left_targetVelocity);
 				talBackLeft.Set  (ControlMode::Velocity, left_targetVelocity);
 			}
+            else{
+                talFrontLeft.Set (ControlMode::Velocity, -left_targetVelocity);
+                talBackLeft.Set (ControlMode::Velocity, left_targetVelocity);
+            }
 			if (rght == 0){
 				talFrontRight.Set (ControlMode::PercentOutput, rght);
 				talBackRight.Set  (ControlMode::PercentOutput, rght);
 			}
-			else{
+			else if(msg->linear.y == 0){
 				talFrontRight.Set (ControlMode::Velocity, right_targetVelocity);
 				talBackRight.Set  (ControlMode::Velocity, right_targetVelocity);
 			}
+            else{
+				talFrontRight.Set (ControlMode::Velocity, -right_targetVelocity);
+                talBackRight.Set (ControlMode::Velocity, right_targetVelocity); 
+            }
 
 			/*Get current Talon SRX motor output */
 			std::stringstream sb;
@@ -329,6 +342,12 @@ class Drive_can: public rclcpp::Node
 			std::cout << "\tOutput%:" << talFrontLeft.GetMotorOutputPercent() << "\n";
 			std::cout << "\tEncoder Velocity:" << talFrontLeft.GetSelectedSensorVelocity(0) << "\n";
 			std::cout << "\tTeorical Velocity:" << left_targetVelocity << "\n\n";
+		}else{
+			std::cout << "\n\n \tSwerve is reaching the goal"<<"\n\n";
+			talFrontLeft.Set (ControlMode::Velocity, 0);
+            talBackLeft.Set (ControlMode::Velocity, 0);
+			talFrontRight.Set (ControlMode::Velocity, 0);
+            talBackRight.Set (ControlMode::Velocity, 0); 
 		}
     }
 	    
@@ -375,13 +394,14 @@ class Drive_can: public rclcpp::Node
 			std::stringstream sb;
 			int dif_error = srxSwrvFL.GetSelectedSensorPosition() - targetPos;
 			front_left_checker=dif_error<170.66 and dif_error>-170.66;
-			std::cout << "\tAxis 2 Output\n";
+			std::cout << "\tFront Left Checker Output\n";
 			//double sensorPosition = srxArm1.GetSelectedSensorPosition() / 4096 / 24 * 360;
 			//double targetPos = msg.data * 4096 * 24 / 360;
 			std::cout << "\tTarget Position Deg: " << msg->data << " degrees\n";
 			std::cout << "\tEncoder Position Ticks:" << srxSwrvFL.GetSelectedSensorPosition() << "ticks\n";
 			std::cout << "\tEncoder Error:" << dif_error << "\n";
-			std::cout << "\tEncoder Velocity:" << srxSwrvFL.GetSelectedSensorVelocity(0) << "\n\n";
+			std::cout << "\tEncoder Velocity:" << srxSwrvFL.GetSelectedSensorVelocity(0) << "\n";
+			std::cout << "\tChecker: "<< front_left_checker<< "\n\n";
 		}
 		else{
 			std::stringstream sb;
@@ -406,13 +426,14 @@ class Drive_can: public rclcpp::Node
 			std::stringstream sb;
 			int dif_error = srxSwrvFr.GetSelectedSensorPosition() - targetPos;
 			front_right_checker=dif_error<170.66 and dif_error>-170.66;
-			std::cout << "\tAxis 3 Output\n";
+			std::cout << "\tFront Right Swerve Output\n";
 			//double sensorPosition = srxArm1.GetSelectedSensorPosition() / 4096 / 24 * 360;
 			//double targetPos = msg.data * 4096 * 24 / 360;
 			std::cout << "\tTarget Position Deg: " << msg->data << " degrees\n";
 			std::cout << "\tEncoder Position Ticks:" << srxSwrvFr.GetSelectedSensorPosition() << "ticks\n";
 			std::cout << "\tEncoder Error:" << dif_error << "\n";
-			std::cout << "\tEncoder Velocity:" << srxSwrvFr.GetSelectedSensorVelocity(0) << "\n\n";
+			std::cout << "\tEncoder Velocity:" << srxSwrvFr.GetSelectedSensorVelocity(0) << "\n";
+			std::cout << "\tChecker: "<< front_right_checker<< "\n\n";
 		}
 		else{
 			std::stringstream sb;
@@ -437,13 +458,14 @@ class Drive_can: public rclcpp::Node
         std::stringstream sb;
         int dif_error = srxSwrvBl.GetSelectedSensorPosition() - targetPos;
 		back_left_checker=dif_error<170.66 and dif_error>-170.66;
-        std::cout << "\tAxis 4 Output\n";
+        std::cout << "\tBack Left Swerve Output\n";
         //double sensorPosition = srxArm1.GetSelectedSensorPosition() / 4096 / 24 * 360;
         //double targetPos = msg.data * 4096 * 24 / 360;
         std::cout << "\tTarget Position Deg: " << msg->data << " degrees\n";
         std::cout << "\tEncoder Position Ticks:" << srxSwrvBl.GetSelectedSensorPosition() << "ticks\n";
         std::cout << "\tEncoder Error:" << dif_error << "\n";
-        std::cout << "\tEncoder Velocity:" << srxSwrvBl.GetSelectedSensorVelocity(0) << "\n\n";
+        std::cout << "\tEncoder Velocity:" << srxSwrvBl.GetSelectedSensorVelocity(0) << "\n";
+		std::cout << "\tChecker: "<< back_left_checker<< "\n\n";
         }
         else{
             std::stringstream sb;
@@ -467,13 +489,14 @@ class Drive_can: public rclcpp::Node
         std::stringstream sb;
         int dif_error = srxSwrvBr.GetSelectedSensorPosition() - targetPos;
 		back_right_checker=dif_error<170.66 and dif_error>-170.66;
-        std::cout << "\tAxis 4 Output\n";
+        std::cout << "\tBack Right Swerve\n";
         //double sensorPosition = srxArm1.GetSelectedSensorPosition() / 4096 / 24 * 360;
         //double targetPos = msg.data * 4096 * 24 / 360;
         std::cout << "\tTarget Position Deg: " << msg->data << " degrees\n";
         std::cout << "\tEncoder Position Ticks:" << srxSwrvBr.GetSelectedSensorPosition() << "ticks\n";
         std::cout << "\tEncoder Error:" << dif_error << "\n";
-        std::cout << "\tEncoder Velocity:" << srxSwrvBr.GetSelectedSensorVelocity(0) << "\n\n";
+        std::cout << "\tEncoder Velocity:" << srxSwrvBr.GetSelectedSensorVelocity(0) << "\n";
+		std::cout << "\tChecker: "<< back_right_checker<< "\n\n";
     	}
     	else{
         std::stringstream sb;
