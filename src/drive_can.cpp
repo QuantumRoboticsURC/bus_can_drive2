@@ -28,11 +28,11 @@ bool start_config = true;
 /* make some talons for arm train */
 TalonSRX srxArm1(11);
 TalonSRX srxSwrvFL(12);
-TalonSRX srxSwrvFr(13);
-TalonSRX srxSwrvBl(14);
+TalonSRX srxSwrvFr(16);
+TalonSRX srxSwrvBl(13);
 TalonSRX srxArm5(15); //Gripper
-TalonSRX srxArm6(16); //Prismatico
-TalonSRX srxSwrvBr(21);
+TalonSRX srxArm6(21); //Prismatico
+TalonSRX srxSwrvBr(14);
 
 /* make some talons for drive train */
 TalonFX talFrontLeft(0);
@@ -62,15 +62,15 @@ srxSwrvBr.ConfigFactoryDefault();
 
 srxArm1.SetInverted(false);
 srxSwrvFL.SetInverted(false);
-srxSwrvFr.SetInverted(false);
-srxSwrvBl.SetInverted(false);
+srxSwrvFr.SetInverted(true);
+srxSwrvBl.SetInverted(true);
 
 srxSwrvBr.SetInverted(false);
 
 srxArm1.SetSensorPhase(false);
 srxSwrvFL.SetSensorPhase(false);
-srxSwrvFr.SetSensorPhase(false);
-srxSwrvBl.SetSensorPhase(false);
+srxSwrvFr.SetSensorPhase(true);
+srxSwrvBl.SetSensorPhase(true);
 
 srxSwrvBr.SetSensorPhase(false);
 
@@ -134,12 +134,12 @@ srxArm1.ConfigMotionAcceleration(9, 10);
 
 /* set closed loop gains in slot0, editar valor de en medio */ 
 /* Set acceleration and vcruise velocity - see documentation */
-srxSwrvFL.Config_kF(0, 102.3, 10);
-srxSwrvFL.Config_kP(0, 1.967307692, 10); 
-srxSwrvFL.Config_kI(0, 0.005, 10);
-srxSwrvFL.Config_kD(0, 19.67307692, 10);
-srxSwrvFL.ConfigMotionCruiseVelocity(8, 10);
-srxSwrvFL.ConfigMotionAcceleration(7.5, 10);
+srxSwrvFL.Config_kF(0, 46.5, 10);
+srxSwrvFL.Config_kP(0, 1.794736842, 10); 
+srxSwrvFL.Config_kI(0, 0.001, 10);
+srxSwrvFL.Config_kD(0, 17.94736842, 10);
+srxSwrvFL.ConfigMotionCruiseVelocity(17, 10);
+srxSwrvFL.ConfigMotionAcceleration(16.5, 10);
 
 /* set closed loop gains in slot0, editar valor de en medio */ 
 /* Set acceleration and vcruise velocity - see documentation */
@@ -280,7 +280,7 @@ class Drive_can: public rclcpp::Node
     	    front_left_ =this->create_subscription<std_msgs::msg::Float64>("/swerve/front_left", 10, std::bind(&Drive_can::frontleftCallback, this, _1));
     	    front_right_ =this->create_subscription<std_msgs::msg::Float64>("/swerve/front_right", 10, std::bind(&Drive_can::frontrightCallback, this, _1));
     	    back_left_ =this->create_subscription<std_msgs::msg::Float64>("/swerve/back_left", 10, std::bind(&Drive_can::backleftCallback, this, _1));
-			back_right_ =this->create_subscription<std_msgs::msg::Float64>("/swerve/back_right", 10, std::bind(&Drive_can::backrightCallback, this, _1));
+	    back_right_ =this->create_subscription<std_msgs::msg::Float64>("/swerve/back_right", 10, std::bind(&Drive_can::backrightCallback, this, _1));
     	    //centrifuge_ =this->create_subscription<std_msgs::msg::Float64>("/swerve/centrifuge", 10, std::bind(&Drive_can::centrifugeCallback, this, _1));
     	    //prism_ =this->create_subscription<std_msgs::msg::Float64>("/arm_teleop_prism", 10, std::bind(&Drive_can::prism_callback, this, std::placeholders::_1));
     	    front_left_checker=false;
@@ -291,13 +291,13 @@ class Drive_can: public rclcpp::Node
 			}
 
     
-    void velocityCallback(const Twist::SharedPtr msg) const{
+	void velocityCallback(const Twist::SharedPtr msg) const{
 		if(front_left_checker and front_right_checker and back_left_checker and back_right_checker){
 
 			/* Magic velocity */
 			/* 2048 units/rev * 1 Rotations in either direction */
-			double rght = msg->linear.x + msg->angular.z;
-			double left = msg->linear.x - msg->angular.z;
+			double rght = -(msg->linear.x + msg->angular.z);
+			double left = -(msg->linear.x - msg->angular.z);
 			if ((rght == 0.0) and (left == 0)){
 				rght = msg->linear.y;
 				left = msg->linear.y;
@@ -367,7 +367,7 @@ class Drive_can: public rclcpp::Node
 		//    int offset2_deg = 33.3984375; //grados, cero horizontal
 		//  double targetPos = (msg.data + offset2_deg) * 4096 / 360;
 		// double targetPos = my_map(msg.data, 10, 161, 510.77, 2228.8);
-		double targetPos = my_map(msg->data,-90,90, 1585.55, 3189.62);  
+		double targetPos = my_map(msg->data,-90,90, 2063, 4111);  
 		srxSwrvFL.Set(ControlMode::MotionMagic, targetPos);
 			//srxArm1.Set(ControlMode::PercentOutput, targetPos);
 
@@ -398,7 +398,7 @@ class Drive_can: public rclcpp::Node
 			//int out_min = 3563;
 			//int out_max = 1515;
 			//double targetPos = (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-		double targetPos = my_map(msg->data,-90 , 90, 658 , 2541);
+		double targetPos = my_map(msg->data,-90 , 90, 1005, 3053);
 			srxSwrvFr.Set(ControlMode::MotionMagic, targetPos);
 			//srxArm1.Set(ControlMode::PercentOutput, targetPos);
 
@@ -429,7 +429,7 @@ class Drive_can: public rclcpp::Node
         //int out_min = 457;
         //int out_max = 3017;
         //double targetPos = (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-        double targetPos =my_map(msg->data,-90,90,1191,3751);
+        double targetPos =my_map(msg->data,-90,90,824,2872);
         srxSwrvBl.Set(ControlMode::MotionMagic, targetPos);
         //srxSwrvBl.Set(ControlMode::PercentOutput, targetPos);
 
@@ -458,8 +458,8 @@ class Drive_can: public rclcpp::Node
         double x = msg->data;
         int in_min = -90;
         int in_max = 90;
-        int out_min = 1026;
-        int out_max = 3413;
+        int out_min = 1420;
+        int out_max = 3468;
         double targetPos = (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
         srxSwrvBr.Set(ControlMode::MotionMagic, targetPos);
         //srxSwrvBr.Set(ControlMode::PercentOutput, msg.data);
