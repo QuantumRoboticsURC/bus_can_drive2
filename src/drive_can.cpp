@@ -61,15 +61,14 @@ srxSwrvBr.ConfigFactoryDefault();
 
 
 srxArm1.SetInverted(false);
-srxSwrvFL.SetInverted(false);
-srxSwrvFr.SetInverted(true);
+srxSwrvFL.SetInverted(true);
+srxSwrvFr.SetInverted(false);
 srxSwrvBl.SetInverted(true);
 
 srxSwrvBr.SetInverted(false);
 
 srxArm1.SetSensorPhase(false);
-srxSwrvFL.SetSensorPhase(false);
-srxSwrvFr.SetSensorPhase(true);
+srxSwrvFL.SetSensorPhase(true);
 srxSwrvBl.SetSensorPhase(true);
 
 srxSwrvBr.SetSensorPhase(false);
