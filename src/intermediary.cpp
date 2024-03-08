@@ -55,12 +55,19 @@ public:
                 backRightAngle  = -90.0;
                 publish_angles();
             }
-            if(msg->angular.z != 0 and msg->linear.y == 0){
+            else if(msg->angular.z != 0 and msg->linear.y == 0){
 
                 frontLeftAngle  = -45.0;
                 frontRightAngle = 45.0;
                 backLeftAngle   = 45.0;
                 backRightAngle  = -45.0;
+                publish_angles();
+            }
+            else if(msg->angular.z==0.0 and msg->linear.y==0.0){
+                frontLeftAngle  = 0.0;
+                frontRightAngle = 0.0;
+                backLeftAngle   = 0.0;
+                backRightAngle  = 0.0;
                 publish_angles();
             }
     }
