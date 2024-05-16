@@ -307,7 +307,7 @@ class Drive_can: public rclcpp::Node
     	    
 			}
 
-    void set_acceleration (int data) {acceleration=data;}
+    //void set_acceleration (int data) {acceleration=data;}
 
 	void velocityCallback(const Twist::SharedPtr msg) {
 		//bool check =front_left_checker and front_right_checker and back_left_checker and back_right_checker;
@@ -467,7 +467,7 @@ class Drive_can: public rclcpp::Node
 		srxSwrvFL.Set(ControlMode::MotionMagic, targetPos);
 			//srxArm1.Set(ControlMode::PercentOutput, targetPos);
 
-			/* Prepare line to print 
+			  Prepare line to print 
 			std::stringstream sb;
 			int dif_error = srxSwrvFL.GetSelectedSensorPosition() - targetPos;
 			front_left_checker=dif_error<170.66 and dif_error>-170.66;
