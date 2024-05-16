@@ -35,10 +35,11 @@ TalonSRX srxArm3(21); //Prismatico
 TalonSRX srxSwrvBr(13);
 
 /* make some talons for drive train */
-TalonFX talFrontLeft(0);
+TalonFX talFrontLeft(3);
 TalonFX talFrontRight(2);
-TalonFX talBackLeft(1);
-TalonFX talBackRight(3);
+TalonFX talBackLeft(0);
+TalonFX talBackRight(1);
+TalonFX talArm2(4);
 
 
 double my_map(double x, double in_min, double in_max, double out_min, double out_max){
@@ -180,6 +181,7 @@ talFrontLeft.ConfigFactoryDefault();
 talFrontRight.ConfigFactoryDefault();
 talBackLeft.ConfigFactoryDefault();
 talBackRight.ConfigFactoryDefault();
+talArm2.ConfigFactoryDefault();
 
 
 
@@ -188,6 +190,7 @@ talFrontLeft.ConfigSelectedFeedbackSensor(FeedbackDevice::IntegratedSensor, 0, 1
 talFrontRight.ConfigSelectedFeedbackSensor(FeedbackDevice::IntegratedSensor, 0, 10);
 talBackLeft.ConfigSelectedFeedbackSensor(FeedbackDevice::IntegratedSensor, 0, 10);
 talBackRight.ConfigSelectedFeedbackSensor(FeedbackDevice::IntegratedSensor, 0, 10);
+talArm2.ConfigSelectedFeedbackSensor(FeedbackDevice::IntegratedSensor, 0, 10);
 
 /**
 * Configure Talon SRX Output and Sensor direction accordingly
@@ -202,6 +205,8 @@ talBackLeft.SetSensorPhase(false);
 talBackLeft.SetInverted(false);
 talBackRight.SetSensorPhase(true);
 talBackRight.SetInverted(true);
+talArm2.SetSensorPhase(true);
+talArm2.SetInverted(true);
 
 /* Set the peak and nominal outputs */
 talFrontLeft.ConfigNominalOutputForward(0, 10);
@@ -285,10 +290,10 @@ class Drive_can: public rclcpp::Node
     	    Drive_can(): Node("drive_can"){
     	    velocity_ =this->create_subscription<Twist>("/cmd_vel", 10, std::bind(&Drive_can::velocityCallback, this, _1));
     	    joint3_ =this->create_subscription<std_msgs::msg::Float64>("/arm_teleop/joint3", 10, std::bind(&Drive_can::joint3Callback, this, _1));
-    	    front_left_ =this->create_subscription<std_msgs::msg::Float64>("/swerve/front_left", 10, std::bind(&Drive_can::frontleftCallback, this, _1));
-    	    front_right_ =this->create_subscription<std_msgs::msg::Float64>("/swerve/front_right", 10, std::bind(&Drive_can::frontrightCallback, this, _1));
-    	    back_left_ =this->create_subscription<std_msgs::msg::Float64>("/swerve/back_left", 10, std::bind(&Drive_can::backleftCallback, this, _1));
-	        back_right_ =this->create_subscription<std_msgs::msg::Float64>("/swerve/back_right", 10, std::bind(&Drive_can::backrightCallback, this, _1));
+    	    //front_left_ =this->create_subscription<std_msgs::msg::Float64>("/swerve/front_left", 10, std::bind(&Drive_can::frontleftCallback, this, _1));
+    	    //front_right_ =this->create_subscription<std_msgs::msg::Float64>("/swerve/front_right", 10, std::bind(&Drive_can::frontrightCallback, this, _1));
+    	    //back_left_ =this->create_subscription<std_msgs::msg::Float64>("/swerve/back_left", 10, std::bind(&Drive_can::backleftCallback, this, _1));
+	        //back_right_ =this->create_subscription<std_msgs::msg::Float64>("/swerve/back_right", 10, std::bind(&Drive_can::backrightCallback, this, _1));
 			joint5_ =this->create_subscription<std_msgs::msg::Float64>("/arm_teleop/joint5", 10, std::bind(&Drive_can::joint5Callback, this, _1));
     	    //centrifuge_ =this->create_subscription<std_msgs::msg::Float64>("/swerve/centrifuge", 10, std::bind(&Drive_can::centrifugeCallback, this, _1));
     	    gripper_ =this->create_subscription<std_msgs::msg::Float64>("/arm_teleop/gripper", 10, std::bind(&Drive_can::gripper_callback, this, std::placeholders::_1));
@@ -305,7 +310,7 @@ class Drive_can: public rclcpp::Node
 	void velocityCallback(const Twist::SharedPtr msg) {
 		bool check =front_left_checker and front_right_checker and back_left_checker and back_right_checker;
 		std::cout<<check<<"\n";
-		if(front_left_checker and front_right_checker and back_left_checker and back_right_checker){
+		//if(front_left_checker and front_right_checker and back_left_checker and back_right_checker){
 			/* Magic velocity */
 			/* 2048 units/rev * 1 Rotations in either direction */
 			double rght = (msg->linear.x + msg->angular.z);
@@ -355,14 +360,14 @@ class Drive_can: public rclcpp::Node
 			std::cout << "\tOutput%:" << talFrontLeft.GetMotorOutputPercent() << "\n";
 			std::cout << "\tEncoder Velocity:" << talFrontLeft.GetSelectedSensorVelocity(0) << "\n";
 			std::cout << "\tTeorical Velocity:" << left_targetVelocity << "\n\n";
-		}else{
+		/*}else{
 			std::cout << "\n\n \tSwerve is reaching the goal"<<"\n\n";
 			talFrontLeft.Set (ControlMode::Velocity, 0);
             talBackLeft.Set (ControlMode::Velocity, 0);
 			talFrontRight.Set (ControlMode::Velocity, 0);
             talBackRight.Set (ControlMode::Velocity, 0); 
 			set_acceleration (1);
-		} 
+		} */
     }
 	    
 	void joint3Callback(const std_msgs::msg::Float64::SharedPtr msg) const{
@@ -422,7 +427,7 @@ class Drive_can: public rclcpp::Node
 		}
 	}
 	// Motor del swerve izquierdo adelante (antes era el joint 2 del brazo)
-	void frontleftCallback(const std_msgs::msg::Float64::SharedPtr msg) {
+	/*void frontleftCallback(const std_msgs::msg::Float64::SharedPtr msg) {
 		ctre::phoenix::unmanaged::FeedEnable(30000);
 		if (msg->data >= -90 && msg->data <= 90){
 		//    int offset2_deg = 33.3984375; //grados, cero horizontal
@@ -432,7 +437,7 @@ class Drive_can: public rclcpp::Node
 		srxSwrvFL.Set(ControlMode::MotionMagic, targetPos);
 			//srxArm1.Set(ControlMode::PercentOutput, targetPos);
 
-			/* Prepare line to print */
+			/* Prepare line to print 
 			std::stringstream sb;
 			int dif_error = srxSwrvFL.GetSelectedSensorPosition() - targetPos;
 			front_left_checker=dif_error<170.66 and dif_error>-170.66;
@@ -464,7 +469,7 @@ class Drive_can: public rclcpp::Node
 			srxSwrvFr.Set(ControlMode::MotionMagic, targetPos);
 			//srxArm1.Set(ControlMode::PercentOutput, targetPos);
 
-			/* Prepare line to print */
+			/* Prepare line to print 
 			std::stringstream sb;
 			int dif_error = srxSwrvFr.GetSelectedSensorPosition() - targetPos;
 			front_right_checker=dif_error<170.66 and dif_error>-170.66;
@@ -492,11 +497,11 @@ class Drive_can: public rclcpp::Node
         //int out_min = 457;
         //int out_max = 3017;
         //double targetPos = (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-        double targetPos =my_map(msg->data,-90,90,519,2567);
+        double targetPos =my_map(msg->data,-90,90,341,2389);
         srxSwrvBl.Set(ControlMode::MotionMagic, targetPos);
         //srxSwrvBl.Set(ControlMode::PercentOutput, targetPos);
 
-        /* Prepare line to print */
+        /* Prepare line to print 
         std::stringstream sb;
         int dif_error = srxSwrvBl.GetSelectedSensorPosition() - targetPos;
 		back_left_checker=dif_error<170.66 and dif_error>-170.66;
@@ -527,7 +532,7 @@ class Drive_can: public rclcpp::Node
         double targetPos = (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
         srxSwrvBr.Set(ControlMode::MotionMagic, targetPos);
         //srxSwrvBr.Set(ControlMode::PercentOutput, msg.data);
-        /* Prepare line to print */
+        /* Prepare line to print 
         std::stringstream sb;
         int dif_error = srxSwrvBr.GetSelectedSensorPosition() - targetPos;
 		back_right_checker=dif_error<170.66 and dif_error>-170.66;
@@ -544,7 +549,7 @@ class Drive_can: public rclcpp::Node
         std::stringstream sb;
         std::cout << "\tMust be a value from -90 to 90 degrees\n";
     	}
-	}	
+	}	*/
 
 	void gripper_callback(const std_msgs::msg::Float64::SharedPtr msg){
 		ctre::phoenix::unmanaged::FeedEnable(10000); 

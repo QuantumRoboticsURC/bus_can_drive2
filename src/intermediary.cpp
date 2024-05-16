@@ -57,10 +57,10 @@ public:
             }
             else if(msg->angular.z != 0 and msg->linear.y == 0){
 
-                frontLeftAngle  = -45.0;
-                frontRightAngle = 45.0;
-                backLeftAngle   = 45.0;
-                backRightAngle  = -45.0;
+                frontLeftAngle  = -75.0;
+                frontRightAngle = 75.0;
+                backLeftAngle   = 72.0;
+                backRightAngle  = -72.0;
                 publish_angles();
             }
             else if(msg->angular.z==0.0 and msg->linear.y==0.0){
