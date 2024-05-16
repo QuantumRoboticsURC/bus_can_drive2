@@ -248,11 +248,11 @@ talBackLeft.Config_kP(0, 0.16084905660, 10);
 talBackLeft.Config_kI(0, 0.001, 10);
 talBackLeft.Config_kD(0, 1.68, 10);
 
-talBackRight.SelectProfileSlot(0, 0);
-talBackRight.Config_kF(0, 0.04721247923, 10);
-talBackRight.Config_kP(0, 0.16084905660, 10);
-talBackRight.Config_kI(0, 0.001, 10);
-talBackRight.Config_kD(0, 1.68, 10);
+talArm2.SelectProfileSlot(0, 0);
+talArm2.Config_kF(0, 0.04721247923, 10);
+talArm2.Config_kP(0, 0.16084905660, 10);
+talArm2.Config_kI(0, 0.001, 10);
+talArm2.Config_kD(0, 1.68, 10);
 
 
 
@@ -278,12 +278,13 @@ class Drive_can: public rclcpp::Node
         rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr centrifuge_;
         rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr gripper_;
 		rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr joint5_;
+		rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr joint2_;
 		
-		bool front_left_checker;
-		bool front_right_checker;
-		bool back_left_checker;
-		bool back_right_checker;
-        int acceleration;
+		//bool front_left_checker;
+		//bool front_right_checker;
+		//bool back_left_checker;
+		//bool back_right_checker;
+        //int acceleration;
         
         
     public:
@@ -295,21 +296,22 @@ class Drive_can: public rclcpp::Node
     	    //back_left_ =this->create_subscription<std_msgs::msg::Float64>("/swerve/back_left", 10, std::bind(&Drive_can::backleftCallback, this, _1));
 	        //back_right_ =this->create_subscription<std_msgs::msg::Float64>("/swerve/back_right", 10, std::bind(&Drive_can::backrightCallback, this, _1));
 			joint5_ =this->create_subscription<std_msgs::msg::Float64>("/arm_teleop/joint5", 10, std::bind(&Drive_can::joint5Callback, this, _1));
+			joint2_ =this->create_subscription<std_msgs::msg::Float64>("/arm_teleop/joint5", 10, std::bind(&Drive_can::joint2Callback, this, _1));
     	    //centrifuge_ =this->create_subscription<std_msgs::msg::Float64>("/swerve/centrifuge", 10, std::bind(&Drive_can::centrifugeCallback, this, _1));
     	    gripper_ =this->create_subscription<std_msgs::msg::Float64>("/arm_teleop/gripper", 10, std::bind(&Drive_can::gripper_callback, this, std::placeholders::_1));
-    	    front_left_checker=false;
-			front_right_checker=false;
-			back_left_checker=false;
-			back_right_checker=false;
-			acceleration=1;
+    	    //front_left_checker=false;
+			//front_right_checker=false;
+			//back_left_checker=false;
+			//back_right_checker=false;
+			//acceleration=1;
     	    
 			}
 
     void set_acceleration (int data) {acceleration=data;}
 
 	void velocityCallback(const Twist::SharedPtr msg) {
-		bool check =front_left_checker and front_right_checker and back_left_checker and back_right_checker;
-		std::cout<<check<<"\n";
+		//bool check =front_left_checker and front_right_checker and back_left_checker and back_right_checker;
+		//std::cout<<check<<"\n";
 		//if(front_left_checker and front_right_checker and back_left_checker and back_right_checker){
 			/* Magic velocity */
 			/* 2048 units/rev * 1 Rotations in either direction */
@@ -420,6 +422,34 @@ class Drive_can: public rclcpp::Node
 		std::cout << "\tEncoder Position Ticks:" << srxArm5.GetSelectedSensorPosition() << "ticks\n";
 		std::cout << "\tEncoder Error:" << dif_error << "\n";
 		std::cout << "\tEncoder Velocity:" << srxArm5.GetSelectedSensorVelocity(0) << "\n\n";
+		}
+		else{
+		std::stringstream sb;
+		std::cout << "\tMust be a value from -110 to 110 degrees\n";
+		}
+	}
+	void joint2Callback(const std_msgs::msg::Float64::SharedPtr msg) const{
+		ctre::phoenix::unmanaged::FeedEnable(10000);  
+		/* Motion Magic */     
+		/*4096 ticks/rev in either direction */
+		/* input should be a value from -110 to 110 deg */
+		if (msg->data >= -90 && msg->data <= 90){
+		//int offset1_deg = 50.2734375 + 180; //Cero at  center
+		//double targetPos = (msg.data + offset1_deg) * 4096 / 360;
+		double targetPos = my_map(msg->data, -90, 90, 1200, 3224);
+		talArm2.Set(ControlMode::MotionMagic, targetPos);
+		//srxArm1.Set(ControlMode::PercentOutput, targetPos);
+
+		/* Prepare line to print */
+		std::stringstream sb;
+		int dif_error = talArm2.GetSelectedSensorPosition() - targetPos;
+		std::cout << "\tAxis 2 Output\n";
+		//double sensorPosition = srxArm1.GetSelectedSensorPosition() / 4096 / 24 * 360;
+		//double targetPos = msg->data * 4096 * 24 / 360;
+		std::cout << "\tTarget Position Deg: " << msg->data << " degrees\n";
+		std::cout << "\tEncoder Position Ticks:" << talArm2.GetSelectedSensorPosition() << "ticks\n";
+		std::cout << "\tEncoder Error:" << dif_error << "\n";
+		std::cout << "\tEncoder Velocity:" << talArm2.GetSelectedSensorVelocity(0) << "\n\n";
 		}
 		else{
 		std::stringstream sb;
