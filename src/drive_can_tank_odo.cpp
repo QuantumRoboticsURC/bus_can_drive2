@@ -303,6 +303,8 @@ class Drive_can: public rclcpp::Node
         rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr gripper_;
 		rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr joint5_;
 		rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr joint2_;
+        rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr publisher_left_vel;
+        rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr publisher_right_vel;
 		
 		//bool front_left_checker;
 		//bool front_right_checker;
@@ -324,7 +326,10 @@ class Drive_can: public rclcpp::Node
 			joint2_ =this->create_subscription<std_msgs::msg::Float64>("/arm_teleop/joint1", 10, std::bind(&Drive_can::joint1Callback, this, _1));
     	    //centrifuge_ =this->create_subscription<std_msgs::msg::Float64>("/swerve/centrifuge", 10, std::bind(&Drive_can::centrifugeCallback, this, _1));
     	    gripper_ =this->create_subscription<std_msgs::msg::Float64>("/arm_teleop/gripper", 10, std::bind(&Drive_can::gripper_callback, this, std::placeholders::_1));
-    	    //front_left_checker=false;
+    	    
+            publisher_left_vel=this->create_publisher<std_msgs::msg::Float64>("left_targetVelocity",10);
+            publisher_right_vel=this->create_publisher<std_msgs::msg::Float64>("right_targetVelocity",10);
+            //front_left_checker=false;
 			//front_right_checker=false;
 			//back_left_checker=false;
 			//back_right_checker=false;
@@ -340,46 +345,34 @@ class Drive_can: public rclcpp::Node
 		//if(front_left_checker and front_right_checker and back_left_checker and back_right_checker){
 			/* Magic velocity */
 			/* 2048 units/rev * 1 Rotations in either direction */
-			double rght = -(msg->linear.x - msg->angular.z);
-			double left = -(msg->linear.x + msg->angular.z);
-			if ((rght == 0.0) and (left == 0.0)){
-				rght = msg->linear.y;
-				left = msg->linear.y;
-			}
-            else if (msg->angular.z ==0){
-                rght = rght;
-                left = left;
-			}
+			double v = -msg->linear.x;
+			double omega = msg->angular.z;
 
+            const double r = 0.15;  // radio de la rueda en metros
+            const double b = 0.65; // distancia entre ruedas en metros
 
-			double left_targetVelocity=left*6000*2048/300;//left*velocidad que otorga el motor*resolucion enc$
-			double right_targetVelocity=rght*6000*2048/300;//left*velocidad que otorga el motor*resolucion en$
+            double wr = (v / r) + (omega * b / (2 * r)); // Rueda derecha
+            double wl = (v / r) - (omega * b / (2 * r)); // Rueda izquierda
 
-			ctre::phoenix::unmanaged::FeedEnable(5000);
-			if (left == 0){
-				talFrontLeft.Set (ControlMode::PercentOutput, left);
-				talBackLeft.Set  (ControlMode::PercentOutput, left);
-			}
-			else if(msg->linear.y == 0){
-				talFrontLeft.Set (ControlMode::Velocity, left_targetVelocity);
-				talBackLeft.Set  (ControlMode::Velocity, left_targetVelocity);
-			}
-            else{
-                talFrontLeft.Set (ControlMode::Velocity, -left_targetVelocity);
-                talBackLeft.Set (ControlMode::Velocity, left_targetVelocity);
-            }
-			if (rght == 0){
-				talFrontRight.Set (ControlMode::PercentOutput, rght);
-				talBackRight.Set  (ControlMode::PercentOutput, rght);
-			}
-			else if(msg->linear.y == 0){
-				talFrontRight.Set (ControlMode::Velocity, right_targetVelocity);
-				talBackRight.Set  (ControlMode::Velocity, right_targetVelocity);
-			}
-            else{
-				talFrontRight.Set (ControlMode::Velocity, right_targetVelocity);
-                talBackRight.Set (ControlMode::Velocity, -right_targetVelocity); 
-            }
+            double conversionFactor = 2048*45/(2*3.1416*10);
+            double right_targetVelocity = wr * conversionFactor;
+            double left_targetVelocity = wl * conversionFactor;
+
+            std_msgs::msg::Float64 left_velMsg;
+            left_velMsg.data = wl;
+            publisher_left_vel->publish(left_velMsg);
+
+            std_msgs::msg::Float64 right_velMsg;
+            right_velMsg.data = wr;
+            publisher_right_vel->publish(right_velMsg);
+
+	    ctre::phoenix::unmanaged::FeedEnable(5000);
+
+            talBackLeft.Set  (ControlMode::Velocity, left_targetVelocity);
+            talFrontLeft.Set  (ControlMode::Velocity, left_targetVelocity);
+            talBackRight.Set  (ControlMode::Velocity, right_targetVelocity);
+            talFrontRight.Set  (ControlMode::Velocity, right_targetVelocity);
+			
 
 			//if (talBackRight.GetFirmwareVersion() != -1){
 			//	std::cout<<"aydua";
