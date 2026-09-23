@@ -1,0 +1,34 @@
+arm_drive_ctre:
+  ros__parameters:
+    # ======================================================================
+    # CAN IDs (int)
+    # ======================================================================
+    # Arm
+    can_id_arm1: 7       # Joint 1 (TalonSRX)cv og 7
+    can_id_arm5: 15      # Joint 4 (TalonSRX)   og 15
+    can_id_gripper: 14   # Gripper (TalonSRX)
+    can_id_lineal: 11    # Linear Actuator (TalonSRX)
+
+    # Drive (TalonFX)
+    can_id_fl: 1         # Front Left
+    can_id_fr: 0         # Front Right
+    can_id_bl: 3         # Back Left
+    can_id_br: 2         # Back Right
+
+    # ======================================================================
+    # Joint 1 limits (float)
+    # ======================================================================
+    j1_deg_min:    -85.0
+    j1_deg_max:     90.0
+    j1_ticks_min:   1862.0 #3968.0
+    j1_ticks_max:   -186.0 #5947.0
+
+    # ======================================================================
+    # Joint 4 limits (float)
+    # ======================================================================
+    j4_deg_min:   -150.0
+    j4_deg_max:    150.0
+    j4_ticks_min:  -2281.0
+    j4_ticks_max:  -5695.0
+    #j4_ticks_min:  1914.0
+    #j4_ticks_max:  5328.0

@@ -42,8 +42,8 @@ int can_id_br       = 0;   // Back Right
 // Arm — constructed after params are read
 std::unique_ptr<TalonSRX> srxArm1_ptr;
 std::unique_ptr<TalonSRX> srxArm5_ptr;
-std::unique_ptr<TalonSRX> srxGripper_ptr;   // ahora se usa como BARRENA
-std::unique_ptr<TalonSRX> srxLineal_ptr;    // ahora se usa como ELEVADOR
+std::unique_ptr<TalonSRX> srxGripper_ptr;
+std::unique_ptr<TalonSRX> srxLineal_ptr;
 
 // Drive — constructed after params are read
 std::unique_ptr<TalonFX> talFrontLeft_ptr;
@@ -61,21 +61,17 @@ std::unique_ptr<TalonFX> talBackRight_ptr;
 #define talBackLeft   (*talBackLeft_ptr)
 #define talBackRight  (*talBackRight_ptr)
 
-// Aliases para los nuevos nombres (apuntan al mismo Talon físico)
-#define srxElevador   (*srxLineal_ptr)
-#define srxBarrena    (*srxGripper_ptr)
-
 // Joint limits (counts and degrees) — overridden by ROS2 parameters in main()
 // Joint 1
 float j1_deg_min    = -85.0f;
 float j1_deg_max    =  90.0f;
-float j1_ticks_min  = -2048.0f;
-float j1_ticks_max  =  0.0f;
+float j1_ticks_min  = 1847.0f;
+float j1_ticks_max  =  3895.0f;
 // Joint 4
 float j4_deg_min    = -150.0f;
 float j4_deg_max    =  150.0f;
-float j4_ticks_min  =  205.0f;
-float j4_ticks_max  =  3618.0f;
+float j4_ticks_min  =  458.0f;
+float j4_ticks_max  =  3871.0f;
 
 // ==========================================================================
 // Utility
@@ -134,7 +130,7 @@ void initAll() {
     srxArm5.ConfigPeakOutputReverse(-1, 10);
 
     srxArm5.Config_kF(0, 0.0, 10);
-    srxArm5.Config_kP(0, 20.0, 10);
+    srxArm5.Config_kP(0, 30.0, 10);
     srxArm5.Config_kI(0, 0.001, 10);
     srxArm5.Config_kD(0, 50.0, 10);
     srxArm5.ConfigMotionCruiseVelocity(30, 10);
@@ -278,30 +274,22 @@ public:
         // Joint angles
         joint1_sub_ = this->create_subscription<std_msgs::msg::Float64>(
             "/arm_teleop/joint1", 10, std::bind(&ArmDriveNode::joint1_callback, this, _1));
-        // joint4_sub_ = this->create_subscription<std_msgs::msg::Float64>(
-        //     "/arm_teleop/joint4", 10, std::bind(&ArmDriveNode::joint4_callback, this, _1));
         joint4_sub_ = this->create_subscription<std_msgs::msg::Float64>(
             "/arm_teleop/joint4", 10, std::bind(&ArmDriveNode::joint4_callback, this, _1));
 
         // Synchronized velocities
         j1_vel_sub_ = this->create_subscription<std_msgs::msg::Float64>(
             "/arm_sync/joint1_velocity", 10, std::bind(&ArmDriveNode::j1_vel_callback, this, _1));
-        // j4_vel_sub_ = this->create_subscription<std_msgs::msg::Float64>(
-        //     "/arm_sync/joint4_velocity", 10, std::bind(&ArmDriveNode::j4_vel_callback, this, _1));
         j4_vel_sub_ = this->create_subscription<std_msgs::msg::Float64>(
             "/arm_sync/joint4_velocity", 10, std::bind(&ArmDriveNode::j4_vel_callback, this, _1));
 
-        // Gripper (ahora se controla como BARRENA usando el mismo Talon)
-        // gripper_sub_ = this->create_subscription<std_msgs::msg::Float64>(
-        //     "/arm_teleop/gripper", 10, std::bind(&ArmDriveNode::gripper_callback, this, _1));
-        barrena_sub_ = this->create_subscription<std_msgs::msg::Float64>(
-            "/arm_teleop/gripper", 10, std::bind(&ArmDriveNode::barrena_callback, this, _1));
+        // Gripper
+        gripper_sub_ = this->create_subscription<std_msgs::msg::Float64>(
+            "/arm_teleop/gripper", 10, std::bind(&ArmDriveNode::gripper_callback, this, _1));
 
-        // Linear actuator → ahora ELEVADOR
-        // linear_sub_ = this->create_subscription<std_msgs::msg::Float64>(
-        //     "/arm_teleop/linear_actuator", 10, std::bind(&ArmDriveNode::linear_callback, this, _1));
-        elevador_sub_ = this->create_subscription<std_msgs::msg::Float64>(
-            "/arm_teleop/elevador", 10, std::bind(&ArmDriveNode::elevador_callback, this, _1));
+        // Linear actuator
+        linear_sub_ = this->create_subscription<std_msgs::msg::Float64>(
+            "/arm_teleop/linear_actuator", 10, std::bind(&ArmDriveNode::linear_callback, this, _1));
 
         // Drive feedback
         pub_left_vel_ = this->create_publisher<std_msgs::msg::Float64>("left_targetVelocity", 10);
@@ -309,12 +297,10 @@ public:
 
         // Joint feedback in DEGREES
         pub_j1_deg_ = this->create_publisher<std_msgs::msg::Float64>("/arm_feedback/joint1_deg", 10);
-        // pub_j4_deg_ = this->create_publisher<std_msgs::msg::Float64>("/arm_feedback/joint4_deg", 10);
         pub_j4_deg_ = this->create_publisher<std_msgs::msg::Float64>("/arm_feedback/joint4_deg", 10);
 
         // Joint feedback in raw ticks
         pub_j1_ticks_ = this->create_publisher<std_msgs::msg::Float64>("/arm_feedback/joint1_ticks", 10);
-        // pub_j4_ticks_ = this->create_publisher<std_msgs::msg::Float64>("/arm_feedback/joint4_ticks", 10);
         pub_j4_ticks_ = this->create_publisher<std_msgs::msg::Float64>("/arm_feedback/joint4_ticks", 10);
 
         // Feedback timer (20 Hz)
@@ -322,11 +308,8 @@ public:
             std::chrono::milliseconds(50),
             std::bind(&ArmDriveNode::publish_feedback, this));
 
-        // RCLCPP_INFO(this->get_logger(),
-        //     "CTRE node ready (J1=ID7, J4=ID15, Gripper=ID14, Linear=ID17, Drive)");
         RCLCPP_INFO(this->get_logger(),
-            "CTRE node ready (J1=ID%d, J3=ID%d, Barrena=ID%d, Elevador=ID%d, Drive)",
-            can_id_arm1, can_id_arm5, can_id_gripper, can_id_lineal);
+            "CTRE node ready (J1=ID7, J4=ID15, Gripper=ID14, Linear=ID17, Drive)");
     }
 
 private:
@@ -392,22 +375,14 @@ private:
         srxArm5.Set(ControlMode::MotionMagic, target);
     }
 
-    // void gripper_callback(const std_msgs::msg::Float64::SharedPtr msg) {
-    //     ctre::phoenix::unmanaged::FeedEnable(10000);
-    //     srxGripper.Set(ControlMode::PercentOutput, msg->data);
-    // }
-    void barrena_callback(const std_msgs::msg::Float64::SharedPtr msg) {
+    void gripper_callback(const std_msgs::msg::Float64::SharedPtr msg) {
         ctre::phoenix::unmanaged::FeedEnable(10000);
-        srxBarrena.Set(ControlMode::PercentOutput, msg->data);
+        srxGripper.Set(ControlMode::PercentOutput, msg->data);
     }
 
-    // void linear_callback(const std_msgs::msg::Float64::SharedPtr msg) {
-    //     ctre::phoenix::unmanaged::FeedEnable(10000);
-    //     srxLineal.Set(ControlMode::PercentOutput, msg->data);
-    // }
-    void elevador_callback(const std_msgs::msg::Float64::SharedPtr msg) {
+    void linear_callback(const std_msgs::msg::Float64::SharedPtr msg) {
         ctre::phoenix::unmanaged::FeedEnable(10000);
-        srxElevador.Set(ControlMode::PercentOutput, msg->data);
+        srxLineal.Set(ControlMode::PercentOutput, msg->data);
     }
 
     void publish_feedback() {
@@ -437,10 +412,8 @@ private:
     rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr joint4_sub_;
     rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr j1_vel_sub_;
     rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr j4_vel_sub_;
-    // rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr gripper_sub_;
-    rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr barrena_sub_;
-    // rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr linear_sub_;
-    rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr elevador_sub_;
+    rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr gripper_sub_;
+    rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr linear_sub_;
 
     rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr pub_left_vel_;
     rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr pub_right_vel_;

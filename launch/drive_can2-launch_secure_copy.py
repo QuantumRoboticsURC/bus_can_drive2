@@ -10,28 +10,24 @@ from launch_ros.actions import Node
 def generate_launch_description():
     # Directorios
     epos_control_dir = get_package_share_directory('epos_control')
-    bus_can_drive_dir = get_package_share_directory('bus_can_drive2')
 
-    # Archivo de parametros
-    params_file = os.path.join(
-        bus_can_drive_dir, 'config', 'drive_can_tank_params.yaml'
-    )
-
+    
     bus_can_drive = Node(
         package='bus_can_drive2',
         executable='drive_can_tank',
-        name='arm_drive_ctre',   # debe coincidir con el nombre del nodo en el YAML
-        output='screen',
-        parameters=[params_file]
+        name='drive_can_tank',
+        output='screen'
     )
-
+    
     epos_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(epos_control_dir, 'launch', 'epos_control_launch.py')
+            os.path.join(epos_control_dir, 'launch', 'epos_control_launch.py')  # o el nombre de tu launch
         )
     )
-
+  
     return LaunchDescription([
+
         bus_can_drive,
         epos_launch
+        
     ])

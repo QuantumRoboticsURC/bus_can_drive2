@@ -27,15 +27,8 @@ find_package (Threads REQUIRED)
 find_package(SDL2 REQUIRED)
 
 include_directories("${PROJECT_SOURCE_DIR}/src/include")
-add_executable(drive_can ${PROJECT_SOURCE_DIR}/src/drive_can.cpp)
 add_executable(drive_can_tank ${PROJECT_SOURCE_DIR}/src/drive_can_tank.cpp)
 if (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "arm-linux-gnueabihf") # Jetson TK1 / Pi
-    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/raspberry/libCTRE_Phoenix.a)
-    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/raspberry/libCTRE_PhoenixCCI.a)
-    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/raspberry/libCTRE_PhoenixDiagnostics.a)
-    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/raspberry/libCTRE_PhoenixPlatform_socketcan.a)
-    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/raspberry/libCTRE_PhoenixCanutils.a)
-    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/raspberry/libCTRE_PhoenixCore.a)
     target_link_libraries(drive_can_tank ${CMAKE_SOURCE_DIR}/src/lib/raspberry/libCTRE_Phoenix.a)
     target_link_libraries(drive_can_tank ${CMAKE_SOURCE_DIR}/src/lib/raspberry/libCTRE_PhoenixCCI.a)
     target_link_libraries(drive_can_tank ${CMAKE_SOURCE_DIR}/src/lib/raspberry/libCTRE_PhoenixDiagnostics.a)
@@ -43,12 +36,6 @@ if (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "arm-linux-gnueabihf") # Jetson TK1 /
     target_link_libraries(drive_can_tank ${CMAKE_SOURCE_DIR}/src/lib/raspberry/libCTRE_PhoenixCanutils.a)
     target_link_libraries(drive_can_tank ${CMAKE_SOURCE_DIR}/src/lib/raspberry/libCTRE_PhoenixCore.a)
 elseif (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "aarch64-linux-gnu") # Jetson TX2
-    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_Phoenix.a)
-    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_PhoenixCCI.a)
-    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_PhoenixDiagnostics.a)
-    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_PhoenixPlatform_socketcan.a)
-    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_PhoenixCanutils.a)
-    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_PhoenixCore.a)
     target_link_libraries(drive_can_tank ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_Phoenix.a)
     target_link_libraries(drive_can_tank ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_PhoenixCCI.a)
     target_link_libraries(drive_can_tank ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_PhoenixDiagnostics.a)
@@ -56,12 +43,6 @@ elseif (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "aarch64-linux-gnu") # Jetson TX2
     target_link_libraries(drive_can_tank ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_PhoenixCanutils.a)
     target_link_libraries(drive_can_tank ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_PhoenixCore.a)
 else()
-    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/x86-64/libCTRE_Phoenix.a)
-    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/x86-64/libCTRE_PhoenixCCI.a)
-    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/x86-64/libCTRE_PhoenixDiagnostics.a)
-    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/x86-64/libCTRE_PhoenixPlatform_socketcan.a)
-    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/x86-64/libCTRE_PhoenixCanutils.a)
-    target_link_libraries(drive_can ${CMAKE_SOURCE_DIR}/src/lib/x86-64/libCTRE_PhoenixCore.a)
     target_link_libraries(drive_can_tank ${CMAKE_SOURCE_DIR}/src/lib/x86-64/libCTRE_Phoenix.a)
     target_link_libraries(drive_can_tank ${CMAKE_SOURCE_DIR}/src/lib/x86-64/libCTRE_PhoenixCCI.a)
     target_link_libraries(drive_can_tank ${CMAKE_SOURCE_DIR}/src/lib/x86-64/libCTRE_PhoenixDiagnostics.a)
@@ -70,7 +51,6 @@ else()
     target_link_libraries(drive_can_tank ${CMAKE_SOURCE_DIR}/src/lib/x86-64/libCTRE_PhoenixCore.a)
     
 endif()
-target_link_libraries(drive_can Threads::Threads)
 target_link_libraries(drive_can_tank Threads::Threads)
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -83,20 +63,64 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-add_executable(intermediate_node ${PROJECT_SOURCE_DIR}/src/intermediary.cpp)
 #target_link_libraries(intermediate_node Threads::Threads)
-ament_target_dependencies(drive_can rclcpp geometry_msgs std_msgs)
+
 ament_target_dependencies(drive_can_tank rclcpp geometry_msgs std_msgs)
-ament_target_dependencies(intermediate_node rclcpp geometry_msgs std_msgs)
+
+add_executable(test_percent_output src/test_percent_output.cpp)
+
+if (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "arm-linux-gnueabihf")
+    target_link_libraries(test_percent_output ${CMAKE_SOURCE_DIR}/src/lib/raspberry/libCTRE_Phoenix.a)
+    target_link_libraries(test_percent_output ${CMAKE_SOURCE_DIR}/src/lib/raspberry/libCTRE_PhoenixCCI.a)
+    target_link_libraries(test_percent_output ${CMAKE_SOURCE_DIR}/src/lib/raspberry/libCTRE_PhoenixDiagnostics.a)
+    target_link_libraries(test_percent_output ${CMAKE_SOURCE_DIR}/src/lib/raspberry/libCTRE_PhoenixPlatform_socketcan.a)
+    target_link_libraries(test_percent_output ${CMAKE_SOURCE_DIR}/src/lib/raspberry/libCTRE_PhoenixCanutils.a)
+    target_link_libraries(test_percent_output ${CMAKE_SOURCE_DIR}/src/lib/raspberry/libCTRE_PhoenixCore.a)
+elseif (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "aarch64-linux-gnu")
+    target_link_libraries(test_percent_output ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_Phoenix.a)
+    target_link_libraries(test_percent_output ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_PhoenixCCI.a)
+    target_link_libraries(test_percent_output ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_PhoenixDiagnostics.a)
+    target_link_libraries(test_percent_output ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_PhoenixPlatform_socketcan.a)
+    target_link_libraries(test_percent_output ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_PhoenixCanutils.a)
+    target_link_libraries(test_percent_output ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_PhoenixCore.a)
+else()
+    target_link_libraries(test_percent_output ${CMAKE_SOURCE_DIR}/src/lib/x86-64/libCTRE_Phoenix.a)
+    target_link_libraries(test_percent_output ${CMAKE_SOURCE_DIR}/src/lib/x86-64/libCTRE_PhoenixCCI.a)
+    target_link_libraries(test_percent_output ${CMAKE_SOURCE_DIR}/src/lib/x86-64/libCTRE_PhoenixDiagnostics.a)
+    target_link_libraries(test_percent_output ${CMAKE_SOURCE_DIR}/src/lib/x86-64/libCTRE_PhoenixPlatform_socketcan.a)
+    target_link_libraries(test_percent_output ${CMAKE_SOURCE_DIR}/src/lib/x86-64/libCTRE_PhoenixCanutils.a)
+    target_link_libraries(test_percent_output ${CMAKE_SOURCE_DIR}/src/lib/x86-64/libCTRE_PhoenixCore.a)
+endif()
+
+target_link_libraries(test_percent_output Threads::Threads)
+
+add_executable(test_current_output src/test_current_output.cpp)
+ament_target_dependencies(test_current_output rclcpp std_msgs)
+target_link_libraries(test_current_output
+  ${CMAKE_SOURCE_DIR}/src/lib/x86-64/libCTRE_Phoenix.a
+  ${CMAKE_SOURCE_DIR}/src/lib/x86-64/libCTRE_PhoenixCCI.a
+  ${CMAKE_SOURCE_DIR}/src/lib/x86-64/libCTRE_PhoenixDiagnostics.a
+  ${CMAKE_SOURCE_DIR}/src/lib/x86-64/libCTRE_PhoenixPlatform_socketcan.a
+  ${CMAKE_SOURCE_DIR}/src/lib/x86-64/libCTRE_PhoenixCanutils.a
+  ${CMAKE_SOURCE_DIR}/src/lib/x86-64/libCTRE_PhoenixCore.a
+  Threads::Threads
+)
+
+install(TARGETS test_current_output
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(TARGETS test_percent_output
+  DESTINATION lib/${PROJECT_NAME}
+)
 install(TARGETS
-drive_can
 drive_can_tank
-intermediate_node
 DESTINATION lib/${PROJECT_NAME}
 )
 
 install(DIRECTORY
   launch
+  config
   DESTINATION share/${PROJECT_NAME}/
 )
 
