@@ -34,10 +34,10 @@ int can_id_arm1     = 7;   // Joint 1
 int can_id_arm5     = 15;  // Joint 4
 int can_id_gripper  = 14;  // Gripper
 int can_id_lineal   = 11;  // Linear Actuator
-int can_id_fl       = 2;   // Front Left
-int can_id_fr       = 1;   // Front Right
+int can_id_fl       = 1;   // Front Left
+int can_id_fr       = 0;   // Front Right
 int can_id_bl       = 3;   // Back Left
-int can_id_br       = 0;   // Back Right
+int can_id_br       = 2;   // Back Right
 
 // Arm — constructed after params are read
 std::unique_ptr<TalonSRX> srxArm1_ptr;
@@ -225,7 +225,7 @@ void initAll() {
 
 class ArmDriveNode : public rclcpp::Node {
 public:
-    ArmDriveNode() : Node("arm_drive_ctre") {
+    ArmDriveNode() : Node("drive_ctre") {
         // ---- Parameters ----
         // CAN IDs (int)
         this->declare_parameter<int>("can_id_arm1",    can_id_arm1);

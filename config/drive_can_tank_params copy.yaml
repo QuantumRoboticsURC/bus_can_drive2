@@ -1,0 +1,10 @@
+drive_ctre:
+  ros__parameters:
+    # ======================================================================
+    # CAN IDs (int)
+    # ======================================================================
+    # Drive (TalonFX)
+    can_id_fl: 1         # Front Left
+    can_id_fr: 0         # Front Right
+    can_id_bl: 3         # Back Left
+    can_id_br: 2         # Back Right
