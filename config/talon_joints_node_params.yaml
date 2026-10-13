@@ -1,0 +1,20 @@
+talon_joints_node:
+  ros__parameters:
+    joint_names: ["joint1", "joint4"]
+    loop_hz: 200.0              # compartido por los dos
+    joint1:
+      can_id: 7
+      kP: 1.0
+      max_amps: 5.0
+      watchdog_ms: 500
+      phys_offset: 12.5
+      sign: -1.0
+      required: true
+    joint4:
+      can_id: 8
+      kP: 0.5
+      max_amps: 3.0
+      watchdog_ms: 300
+      phys_offset: -40.0
+      sign: 1.0
+      required: false

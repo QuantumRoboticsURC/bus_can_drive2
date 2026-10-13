@@ -4,19 +4,19 @@
 //   /arm_teleop/joint1/current  (std_msgs/Float64)  setpoint de corriente en AMPERES
 //
 // Publishers:
-//   /arm_feedback/joint1_deg    (std_msgs/Float64)  posicion actual en grados (0 a 360)
-//   /arm_feedback/joint1_ticks  (std_msgs/Float64)  posicion actual en ticks (0 a 4095)
+//   /arm_feedback/joint1_deg    (std_msgs/Float64)  posicion actual en grados (0 a 360) con offset y soporte para negativos
+//   /arm_feedback/joint1_ticks  (std_msgs/Float64)  posicion actual en ticks (0 a 4095) en teoria
 //
 // Parametros (declare_parameter):
 //   can_id        int    (default 7)
 //   slot          int    (default 0)
 //   kP            double (default 1.0)   escribe el kP en el Talon al arrancar
-//   loop_hz       double (default 100.0)
+//   loop_hz       double (default 200.0)
 //   watchdog_ms   int    (default 500)   si no llega current_cmd en este tiempo, baja a 0 A
-//   max_amps      double (default 2.0)   satura el setpoint
+//   max_amps      double (default 5.0)   satura el setpoint
 //
 // Encoder: Mag Encoder absoluto, 12 bits, 4096 ticks por vuelta, en la flecha final.
-// La publicacion de ticks y deg es ACTUAL (dentro de la vuelta), no acumulada.
+// La publicacion de ticks y deg es ACTUAL con un offset y soporte para grados y ticks negativos.
 
 #define Phoenix_No_WPI
 
@@ -45,15 +45,9 @@ constexpr int    TICKS_PER_REV  = 4096;
 
 // ============================= HELPERS DE ENCODER =====================
 
-// Normaliza ticks acumulados a [0, 4095]. Soporta valores negativos.
-static int ticks_mod(long raw) {
-    int t = static_cast<int>(raw % TICKS_PER_REV);
-    if (t < 0) t += TICKS_PER_REV;
-    return t;
-}
-
-static double ticks_to_deg(int t) {
-    return t * 360.0 / COUNTS_PER_REV;
+//modificado c/ offset, porque no seguia la regla de la mano derecha
+static double ticks_to_deg_j1(double t,double offset) {
+    return offset-(t * 360.0 / COUNTS_PER_REV);
 }
 
 // ============================= NODO ===================================
@@ -65,9 +59,11 @@ public:
         can_id_      = this->declare_parameter<int>("can_id", 7);
         slot_        = this->declare_parameter<int>("slot", 0);
         kp_          = this->declare_parameter<double>("kP", 1.0);
-        loop_hz_     = this->declare_parameter<double>("loop_hz", 500.0);
+        loop_hz_     = this->declare_parameter<double>("loop_hz", 200.0);
         watchdog_ms_ = this->declare_parameter<int>("watchdog_ms", 500);
         max_amps_    = this->declare_parameter<double>("max_amps", 5.0);
+        phys_offset_ = this->declare_parameter<double>("phys_offset", 0.0);
+        
 
         RCLCPP_INFO(this->get_logger(),
             "joint1_current_node: can_id=%d slot=%d kP=%.3f loop=%.1fHz watchdog=%dms max=%.2fA",
@@ -75,20 +71,27 @@ public:
 
         // CAN y Talon
         ctre::phoenix::platform::can::SetCANInterface("can0");
-        talon_ = std::make_unique<TalonSRX>(can_id_);
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
-        if (talon_->GetFirmwareVersion() == -1) {
+        talon_j1 = std::make_unique<TalonSRX>(can_id_);
+        // Reintento con tiempo limite (1 s): el primer frame del Talon puede tardar en llegar
+        const auto deadline = Clock::now() + std::chrono::seconds(1);
+        bool talon_ok = false;
+        for (;;) {
+            if (talon_j1->GetFirmwareVersion() != -1) { talon_ok = true; break; }
+            if (Clock::now() >= deadline) break;
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+        if (!talon_ok) {
             RCLCPP_FATAL(this->get_logger(), "Talon ID %d no responde en can0", can_id_);
             throw std::runtime_error("Talon no responde");
         }
 
         // Setup del sensor y gains
-        talon_->ClearStickyFaults(50);
-        talon_->ConfigSelectedFeedbackSensor(FeedbackDevice::CTRE_MagEncoder_Absolute, 0, 10);
-        talon_->SetSensorPhase(false);
-        talon_->SetStatusFramePeriod(StatusFrameEnhanced::Status_2_Feedback0, 10, 10);
-        talon_->SelectProfileSlot(slot_, 0);
-        talon_->Config_kP(slot_, kp_, 50);
+        talon_j1->ClearStickyFaults(50);
+        talon_j1->ConfigSelectedFeedbackSensor(FeedbackDevice::CTRE_MagEncoder_Absolute, 0, 10);
+        talon_j1->SetSensorPhase(false);
+        talon_j1->SetStatusFramePeriod(StatusFrameEnhanced::Status_2_Feedback0, 10, 10);
+        talon_j1->SelectProfileSlot(slot_, 0);
+        talon_j1->Config_kP(slot_, kp_, 50);
 
         // Marca de "nunca ha llegado un comando"
         last_cmd_time_ = Clock::now() - std::chrono::seconds(10);
@@ -117,10 +120,10 @@ public:
     ~Joint1CurrentNode() override {
         // Apagado seguro: 0 A por 200 ms antes de bajar los threads
         for (int i = 0; i < 20; ++i) {
-            talon_->Set(ControlMode::Current, 0.0);
+            talon_j1->Set(ControlMode::Current, 0.0);
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
-        talon_->Set(ControlMode::PercentOutput, 0.0);
+        talon_j1->Set(ControlMode::PercentOutput, 0.0);
 
         enabled_ = false;
         run_     = false;
@@ -163,14 +166,15 @@ private:
         }
         if (amps != 0.0) watchdog_warned_ = false;
 
-        talon_->Set(ControlMode::Current, amps);
+        talon_j1->Set(ControlMode::Current, amps);
 
-        // Leer encoder y publicar posicion ACTUAL (modulo una vuelta)
-        const long raw = static_cast<long>(talon_->GetSelectedSensorPosition());
-        const int  t   = ticks_mod(raw);
-        const double deg = ticks_to_deg(t);
+        // Leer encoder y publicar posicion ACTUAL
+        //Nota: no nos conviene que sea modulo, porque cuando llega a 0 o pasa de 360 
+        //      la cuenta pierde referencia de ticks y grados, y eso hace que el control se vuelva loco.
+        const double ticks = static_cast<double>(talon_j1->GetSelectedSensorPosition());
+        const double deg = ticks_to_deg_j1(ticks,phys_offset_);
 
-        std_msgs::msg::Float64 msg_ticks; msg_ticks.data = static_cast<double>(t);
+        std_msgs::msg::Float64 msg_ticks; msg_ticks.data = ticks;
         std_msgs::msg::Float64 msg_deg;   msg_deg.data   = deg;
         pub_ticks_->publish(msg_ticks);
         pub_deg_->publish(msg_deg);
@@ -185,7 +189,7 @@ private:
 
     void fault_loop() {
         while (run_) {
-            Faults f; talon_->GetFaults(f);
+            Faults f; talon_j1->GetFaults(f);
             if (f.UnderVoltage || f.HardwareFailure || f.ResetDuringEn || f.APIError) {
                 RCLCPP_WARN(this->get_logger(),
                     "falla: UV=%d HW=%d RstEn=%d APIErr=%d",
@@ -202,9 +206,10 @@ private:
     double loop_hz_;
     int    watchdog_ms_;
     double max_amps_;
+    double phys_offset_;
 
     // Talon
-    std::unique_ptr<TalonSRX> talon_;
+    std::unique_ptr<TalonSRX> talon_j1;
 
     // Estado del setpoint
     std::mutex cmd_mtx_;
@@ -227,12 +232,14 @@ private:
 
 int main(int argc, char** argv) {
     rclcpp::init(argc, argv);
+    int ret = 0;
     try {
         auto node = std::make_shared<Joint1CurrentNode>();
         rclcpp::spin(node);
     } catch (const std::exception& e) {
         RCLCPP_ERROR(rclcpp::get_logger("main"), "fatal: %s", e.what());
+        ret=1;
     }
     rclcpp::shutdown();
-    return 0;
+    return ret;
 }

@@ -139,6 +139,22 @@ ament_target_dependencies(joint1_current_node rclcpp std_msgs)
 
 install(TARGETS joint1_current_node DESTINATION lib/${PROJECT_NAME})
 
+# ---- talon_joints_node: control por corriente de los Talon de los joints 1 y 4 ----
+add_executable(talon_joints_node ${PROJECT_SOURCE_DIR}/src/talon_joints_node.cpp)
+if (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "aarch64-linux-gnu")
+    target_link_libraries(talon_joints_node ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_Phoenix.a)
+    target_link_libraries(talon_joints_node ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_PhoenixCCI.a)
+    target_link_libraries(talon_joints_node ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_PhoenixDiagnostics.a)
+    target_link_libraries(talon_joints_node ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_PhoenixPlatform_socketcan.a)
+    target_link_libraries(talon_joints_node ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_PhoenixCanutils.a)
+    target_link_libraries(talon_joints_node ${CMAKE_SOURCE_DIR}/src/lib/jetsontx/libCTRE_PhoenixCore.a)
+endif()
+target_link_libraries(talon_joints_node Threads::Threads)
+ament_target_dependencies(talon_joints_node rclcpp std_msgs)
+
+install(TARGETS talon_joints_node DESTINATION lib/${PROJECT_NAME})
+# ---- fin talon_joints_node ----
+
 # ---- NUEVO: prueba de control por corriente (sin ROS, solo Phoenix) ----
 add_executable(current_test_v3 src/current_test_v3.cpp)
 
